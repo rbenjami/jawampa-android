@@ -1,0 +1,50 @@
+buildscript {
+	repositories {
+		mavenCentral() // or jcenter()
+	}
+
+	dependencies {
+		classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.6.1'
+	}
+}
+
+apply plugin: 'com.android.application'
+
+// make sure this line comes *after* you apply the Android plugin
+apply plugin: 'com.getkeepsafe.dexcount'
+
+android {
+	compileSdkVersion 24
+	buildToolsVersion "24.0.3"
+	defaultConfig {
+		applicationId "ws.wamp.jawampa"
+		minSdkVersion 15
+		targetSdkVersion 24
+		versionCode 1
+		versionName "1.0"
+		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+	}
+	buildTypes {
+		release {
+			minifyEnabled false
+			proguardFiles getDefaultProguardFile( 'proguard-android.txt' ), 'proguard-rules.pro'
+		}
+	}
+	packagingOptions {
+		exclude 'META-INF/io.netty.versions.properties'
+		exclude 'META-INF/INDEX.LIST'
+		exclude 'META-INF/LICENSE'
+	}
+}
+
+dependencies {
+	compile fileTree( dir: 'libs', include: ['*.jar'] )
+	androidTestCompile( 'com.android.support.test.espresso:espresso-core:2.2.2', {
+		exclude group: 'com.android.support', module: 'support-annotations'
+	} )
+	compile project( path: ':jawampa-netty' )
+
+	compile 'com.android.support:appcompat-v7:24.2.1'
+	compile 'com.android.support:design:24.2.1'
+	testCompile 'junit:junit:4.12'
+}

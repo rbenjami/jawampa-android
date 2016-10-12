@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/JawampaAndroid.iml" filepath="$PROJECT_DIR$/JawampaAndroid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jawampa-core/jawampa-core.iml" filepath="$PROJECT_DIR$/jawampa-core/jawampa-core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jawampa-netty/jawampa-netty.iml" filepath="$PROJECT_DIR$/jawampa-netty/jawampa-netty.iml" />
+    </modules>
+  </component>
+</project>
