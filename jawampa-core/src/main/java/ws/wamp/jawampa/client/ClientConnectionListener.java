@@ -27,31 +27,36 @@ import ws.wamp.jawampa.connection.IWampConnectionListener;
  * All events must be rescheduled to the eventLoop, because it might be the case that the
  * events are fired from another thread.
  */
-class ClientConnectionListener implements IWampConnectionListener {
-    private final StateController stateController;
+class ClientConnectionListener implements IWampConnectionListener
+{
+	private final StateController stateController;
 
-    ClientConnectionListener(StateController stateController) {
-        this.stateController = stateController;
-    }
+	ClientConnectionListener( StateController stateController )
+	{
+		this.stateController = stateController;
+	}
 
-    @Override
-    public void messageReceived(final WampMessage message) {
-        // Remark: No need to check for connection. The controller guarantees that after close()
-        // messages will no longer be forwarded
-        stateController.onMessage(message);
-    }
+	@Override
+	public void messageReceived( final WampMessage message )
+	{
+		// Remark: No need to check for connection. The controller guarantees that after close()
+		// messages will no longer be forwarded
+		stateController.onMessage( message );
+	}
 
-    @Override
-    public void transportClosed() {
-        // Remark: No need to check for connection. The controller guarantees that after close()
-        // messages will no longer be forwarded
-        transportError(new ApplicationError(ApplicationError.TRANSPORT_CLOSED));
-    }
+	@Override
+	public void transportClosed()
+	{
+		// Remark: No need to check for connection. The controller guarantees that after close()
+		// messages will no longer be forwarded
+		transportError( new ApplicationError( ApplicationError.TRANSPORT_CLOSED ) );
+	}
 
-    @Override
-    public void transportError(final Throwable cause) {
-        // Remark: No need to check for connection. The controller guarantees that after close()
-        // messages will no longer be forwarded
-        stateController.onConnectionClosed(cause);
-    }
+	@Override
+	public void transportError( final Throwable cause )
+	{
+		// Remark: No need to check for connection. The controller guarantees that after close()
+		// messages will no longer be forwarded
+		stateController.onConnectionClosed( cause );
+	}
 }

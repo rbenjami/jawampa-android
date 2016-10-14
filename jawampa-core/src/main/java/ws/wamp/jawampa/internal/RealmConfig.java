@@ -16,28 +16,31 @@
 
 package ws.wamp.jawampa.internal;
 
+import ws.wamp.jawampa.WampRoles;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import ws.wamp.jawampa.WampRoles;
-
 /**
  * Allows to configure realms that are exposed by routers
  */
-public class RealmConfig {
+public class RealmConfig
+{
 
-    public final Set<WampRoles> roles;
-    public final boolean useStrictUriValidation;
-    
-    public Set<WampRoles> roles() {
-        return roles;
-    }
-    
-    public RealmConfig(Set<WampRoles> roles, boolean useStrictUriValidation)  {
-        // Copy the roles
-        this.roles = Collections.unmodifiableSet(new HashSet<WampRoles>(roles));
-        this.useStrictUriValidation = useStrictUriValidation;
-    }
+	public final Set<WampRoles> roles;
+	public final boolean        useStrictUriValidation;
+
+	public Set<WampRoles> roles()
+	{
+		return roles;
+	}
+
+	public RealmConfig( Set<WampRoles> roles, boolean useStrictUriValidation )
+	{
+		// Copy the roles
+		this.roles = Collections.unmodifiableSet( new HashSet<WampRoles>( roles ) );
+		this.useStrictUriValidation = useStrictUriValidation;
+	}
 
 }

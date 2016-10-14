@@ -19,35 +19,39 @@ package ws.wamp.jawampa;
 /**
  * Possible roles for WAMP peers
  */
-public enum WampRoles {
-    
-    Callee("callee"),
-    Caller("caller"),
-    Publisher("publisher"),
-    Subscriber("subscriber"),
-    Dealer("dealer"),
-    Broker("broker");
-    
-    private final String stringValue;
-    
-    WampRoles(String stringValue) {
-        this.stringValue = stringValue;
-    }
-    
-    @Override
-    public String toString() {
-        return stringValue;
-    }
-    
-    public static WampRoles fromString(String role) {
-        if (role == null) return null;
-        else if (role.equals("callee")) return Callee;
-        else if (role.equals("caller")) return Caller;
-        else if (role.equals("publisher")) return Publisher;
-        else if (role.equals("subscriber")) return Subscriber;
-        else if (role.equals("dealer")) return Dealer;
-        else if (role.equals("broker")) return Broker;
-        return null;
-    }
-    
+public enum WampRoles
+{
+
+	Callee( "callee" ),
+	Caller( "caller" ),
+	Publisher( "publisher" ),
+	Subscriber( "subscriber" ),
+	Dealer( "dealer" ),
+	Broker( "broker" );
+
+	private final String stringValue;
+
+	WampRoles( String stringValue )
+	{
+		this.stringValue = stringValue;
+	}
+
+	@Override
+	public String toString()
+	{
+		return stringValue;
+	}
+
+	public static WampRoles fromString( String role )
+	{
+		if ( role == null ) return null;
+		else if ( role.equals( "callee" ) ) return Callee;
+		else if ( role.equals( "caller" ) ) return Caller;
+		else if ( role.equals( "publisher" ) ) return Publisher;
+		else if ( role.equals( "subscriber" ) ) return Subscriber;
+		else if ( role.equals( "dealer" ) ) return Dealer;
+		else if ( role.equals( "broker" ) ) return Broker;
+		return null;
+	}
+
 }

@@ -23,21 +23,25 @@ import com.google.gson.JsonArray;
  * Utility class to build a Jackson argument array out of an arbitrary list
  * of positional arguments.
  */
-public class ArgArrayBuilder {
-    /**
-     * Builds an ArrayNode from all positional arguments in a WAMP message.<br>
-     * If there are no positional arguments then null will be returned, as
-     * WAMP requires no empty arguments list to be transmitted.
-     * @param args All positional arguments
-     * @return An ArrayNode containing positional arguments or null
-     */
-    public static JsonArray buildArgumentsArray( Gson gson, Object... args ) {
-        if (args.length == 0) return null;
-        // Build the arguments array and serialize the arguments
-        final JsonArray argArray = new JsonArray();
-        for (Object arg : args) {
-            argArray.add( gson.toJsonTree( arg ) );
-        }
-        return argArray;
-    }
+public class ArgArrayBuilder
+{
+	/**
+	 * Builds an ArrayNode from all positional arguments in a WAMP message.<br>
+	 * If there are no positional arguments then null will be returned, as
+	 * WAMP requires no empty arguments list to be transmitted.
+	 *
+	 * @param args All positional arguments
+	 * @return An ArrayNode containing positional arguments or null
+	 */
+	public static JsonArray buildArgumentsArray( Gson gson, Object... args )
+	{
+		if ( args.length == 0 ) return null;
+		// Build the arguments array and serialize the arguments
+		final JsonArray argArray = new JsonArray();
+		for ( Object arg : args )
+		{
+			argArray.add( gson.toJsonTree( arg ) );
+		}
+		return argArray;
+	}
 }
