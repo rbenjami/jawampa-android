@@ -16,8 +16,8 @@
 
 package ws.wamp.jawampa.internal;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 
 /**
  * Utility class to build a Jackson argument array out of an arbitrary list
@@ -31,12 +31,12 @@ public class ArgArrayBuilder {
      * @param args All positional arguments
      * @return An ArrayNode containing positional arguments or null
      */
-    public static ArrayNode buildArgumentsArray(ObjectMapper objectMapper, Object... args) {
+    public static JsonArray buildArgumentsArray( Gson gson, Object... args ) {
         if (args.length == 0) return null;
         // Build the arguments array and serialize the arguments
-        final ArrayNode argArray = objectMapper.createArrayNode();
+        final JsonArray argArray = new JsonArray();
         for (Object arg : args) {
-            argArray.addPOJO(arg);
+            argArray.add( gson.toJsonTree( arg ) );
         }
         return argArray;
     }

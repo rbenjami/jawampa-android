@@ -16,8 +16,8 @@
 
 package ws.wamp.jawampa;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import ws.wamp.jawampa.WampMessages.ErrorMessage;
 import ws.wamp.jawampa.WampMessages.YieldMessage;
 import ws.wamp.jawampa.client.SessionEstablishedState;
@@ -31,18 +31,18 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 /**
  * Holds the arguments for a WAMP remote procedure call and provides methods
  * to send responses to the caller.<br>
- * Either {@link #reply(ArrayNode, ObjectNode)} or 
- * {@link #replyError(String, ArrayNode, ObjectNode)}} should be called in
+ * Either {@link #reply(JsonArray, JsonObject)} or
+ * {@link #replyError(String, JsonArray, JsonObject)}} should be called in
  * order to send a positive or negative response back to the caller.
  */
-public class Request {
-    
-    final StateController stateController;
+public class Request
+{
+    final StateController         stateController;
     final SessionEstablishedState session;
-    final long requestId;
-    final ArrayNode arguments;
-    final ObjectNode keywordArguments;
-    final ObjectNode details;
+    final long                    requestId;
+    final JsonArray               arguments;
+    final JsonObject              keywordArguments;
+    final JsonObject              details;
     
     volatile int replySent = 0;
     
@@ -50,21 +50,9 @@ public class Request {
     static {
         replySentUpdater = AtomicIntegerFieldUpdater.newUpdater(Request.class, "replySent");
     }
-    
-    public ArrayNode arguments() {
-        return arguments;
-    }
-    
-    public ObjectNode keywordArguments() {
-        return keywordArguments;
-    }
-    
-    public ObjectNode details() {
-    	return details;
-    }
 
     public Request(StateController stateController, SessionEstablishedState session, 
-                   long requestId, ArrayNode arguments, ObjectNode keywordArguments, ObjectNode details)
+                   long requestId, JsonArray arguments, JsonObject keywordArguments, JsonObject details)
     {
         this.stateController = stateController;
         this.session = session;
@@ -73,7 +61,22 @@ public class Request {
         this.keywordArguments = keywordArguments;
         this.details = details;
     }
-    
+
+    public JsonArray getArguments()
+    {
+        return arguments;
+    }
+
+    public JsonObject getKeywordArguments()
+    {
+        return keywordArguments;
+    }
+
+    public JsonObject getDetails()
+    {
+        return details;
+    }
+
     /**
      * Send an error message in response to the request.<br>
      * If this is called more than once then the following invocations will
@@ -99,7 +102,7 @@ public class Request {
      * @param args The positional arguments to sent in the response
      */
     public void replyError(String errorUri, Object... args) throws ApplicationError{
-        replyError(errorUri, ArgArrayBuilder.buildArgumentsArray(stateController.clientConfig().objectMapper(), args), null);
+        replyError(errorUri, ArgArrayBuilder.buildArgumentsArray(stateController.clientConfig().gson(), args), null);
     }
     
     /**
@@ -111,7 +114,7 @@ public class Request {
      * @param arguments The positional arguments to sent in the response
      * @param keywordArguments The keyword arguments to sent in the response
      */
-    public void replyError(String errorUri, ArrayNode arguments, ObjectNode keywordArguments) throws ApplicationError {
+    public void replyError(String errorUri, JsonArray arguments, JsonObject keywordArguments) throws ApplicationError {
         int replyWasSent = replySentUpdater.getAndSet(this, 1);
         if (replyWasSent == 1) return;
         
@@ -137,7 +140,7 @@ public class Request {
      * @param arguments The positional arguments to sent in the response
      * @param keywordArguments The keyword arguments to sent in the response
      */
-    public void reply(ArrayNode arguments, ObjectNode keywordArguments) {
+    public void reply(JsonArray arguments, JsonObject keywordArguments) {
         int replyWasSent = replySentUpdater.getAndSet(this, 1);
         if (replyWasSent == 1) return;
         
@@ -164,8 +167,6 @@ public class Request {
      * @param args The positional arguments to sent in the response
      */
     public void reply(Object... args) {
-        reply(ArgArrayBuilder.buildArgumentsArray(
-            stateController.clientConfig().objectMapper(),args), null);
+        reply(ArgArrayBuilder.buildArgumentsArray(stateController.clientConfig().gson(), args), null);
     }
-
 }

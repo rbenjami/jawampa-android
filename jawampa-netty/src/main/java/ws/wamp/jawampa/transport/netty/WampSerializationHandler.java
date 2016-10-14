@@ -59,7 +59,7 @@ public class WampSerializationHandler extends MessageToMessageEncoder<WampMessag
         Gson gson = serialization.getGson();
         try {
             JsonWriter writer = new JsonWriter(new OutputStreamWriter(outStream, "UTF-8"));
-            JsonArray node = msg.toObjectArray( gson );
+            JsonArray node = msg.toObjectArray();
 
             gson.toJson( node, writer );
 

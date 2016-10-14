@@ -16,30 +16,34 @@
 
 package ws.wamp.jawampa;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
-public class PubSubData {
+public class PubSubData
+{
+    private final JsonObject details;
+    private final JsonArray  arguments;
+    private final JsonObject keywordArguments;
 
-    final ObjectNode details;
-    final ArrayNode arguments;
-    final ObjectNode keywordArguments;
-
-    public ObjectNode details() {
-        return details;
-    }
-
-    public ArrayNode arguments() {
-        return arguments;
-    }
-    
-    public ObjectNode keywordArguments() {
-        return keywordArguments;
-    }
-
-    public PubSubData(ObjectNode details, ArrayNode arguments, ObjectNode keywordArguments) {
+    public PubSubData( JsonObject details, JsonArray arguments, JsonObject keywordArguments )
+    {
         this.details = details;
         this.arguments = arguments;
         this.keywordArguments = keywordArguments;
+    }
+
+    public JsonObject getDetails()
+    {
+        return details;
+    }
+
+    public JsonArray getArguments()
+    {
+        return arguments;
+    }
+
+    public JsonObject getKeywordArguments()
+    {
+        return keywordArguments;
     }
 }

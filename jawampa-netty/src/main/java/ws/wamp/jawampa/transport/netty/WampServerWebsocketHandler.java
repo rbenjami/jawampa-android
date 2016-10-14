@@ -16,31 +16,16 @@
 
 package ws.wamp.jawampa.transport.netty;
 
-import ws.wamp.jawampa.WampRouter;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrameAggregator;
-import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import io.netty.channel.*;
+import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.websocketx.*;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.StringUtil;
-import ws.wamp.jawampa.WampSerialization;
 import ws.wamp.jawampa.WampMessages.WampMessage;
+import ws.wamp.jawampa.WampRouter;
+import ws.wamp.jawampa.WampSerialization;
 import ws.wamp.jawampa.connection.IWampConnection;
 import ws.wamp.jawampa.connection.IWampConnectionAcceptor;
 import ws.wamp.jawampa.connection.IWampConnectionListener;
@@ -48,13 +33,14 @@ import ws.wamp.jawampa.connection.IWampConnectionPromise;
 
 import java.util.List;
 
-import static io.netty.handler.codec.http.HttpHeaders.Names.*;
-import static io.netty.handler.codec.http.HttpVersion.*;
+import static io.netty.handler.codec.http.HttpHeaders.Names.HOST;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
  * A websocket server adapter for WAMP that integrates into a Netty pipeline.
  */
-public class WampServerWebsocketHandler extends ChannelInboundHandlerAdapter {
+public class WampServerWebsocketHandler extends ChannelInboundHandlerAdapter
+{
     
     final String websocketPath;
     final WampRouter router;

@@ -16,11 +16,6 @@
 
 package ws.wamp.jawampa;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -36,7 +31,7 @@ public class WampMessages {
      */
     public static abstract class WampMessage {
 
-        public abstract JsonArray toObjectArray( Gson gson )
+        public abstract JsonArray toObjectArray()
                 throws WampError;
 
         public static WampMessage fromObjectArray(JsonArray messageNode)
@@ -109,14 +104,14 @@ public class WampMessages {
             this.details = details;
         }
 
-        public JsonArray toObjectArray(Gson gson) throws WampError {
+        public JsonArray toObjectArray() throws WampError {
             JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(realm);
             if (details != null)
                 messageNode.add(details);
             else
-                messageNode.add(new JsonArray());
+                messageNode.add(new JsonObject());
             return messageNode;
         }
 
@@ -149,27 +144,27 @@ public class WampMessages {
             this.details = details;
         }
 
-        public Jsona toObjectArray(Gson gson) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(sessionId);
             if (details != null)
                 messageNode.add(details);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             return messageNode;
         }
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 3
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).isObject())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !messageNode.get(2).isJsonObject())
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long sessionId = messageNode.get(1).asLong();
-                ObjectNode details = (ObjectNode) messageNode.get(2);
+                long sessionId = messageNode.get(1).getAsLong();
+                JsonObject details = messageNode.get(2).getAsJsonObject();
                 return new WelcomeMessage(sessionId, details);
             }
         }
@@ -181,35 +176,36 @@ public class WampMessages {
      */
     public static class AbortMessage extends WampMessage {
         public final static int ID = 3;
-        public ObjectNode details;
+        public JsonObject details;
         public String reason;
 
-        public AbortMessage(ObjectNode details, String reason) {
+        public AbortMessage(JsonObject details, String reason) {
             this.details = details;
             this.reason = reason;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             if (details != null)
                 messageNode.add(details);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             messageNode.add(reason);
             return messageNode;
         }
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode)
+            public WampMessage fromObjectArray(JsonArray messageNode)
                     throws WampError {
-                if (messageNode.size() != 3 || !messageNode.get(1).isObject()
-                        || !messageNode.get(2).isTextual())
+                if (messageNode.size() != 3
+                        || !messageNode.get(1).isJsonObject()
+                        || !(messageNode.get(2).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isString()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                ObjectNode details = (ObjectNode) messageNode.get(1);
-                String reason = messageNode.get(2).asText();
+                JsonObject details = messageNode.get(1).getAsJsonObject();
+                String reason = messageNode.get(2).getAsString();
                 return new AbortMessage(details, reason);
             }
         }
@@ -222,34 +218,34 @@ public class WampMessages {
     public static class ChallengeMessage extends WampMessage {
         public final static int ID = 4;
         public String authMethod;
-        public ObjectNode extra;
+        public JsonObject extra;
 
-        public ChallengeMessage(String authMethod, ObjectNode extra) {
+        public ChallengeMessage(String authMethod, JsonObject extra) {
             this.authMethod = authMethod;
             this.extra = extra;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(authMethod);
             if (extra != null)
                 messageNode.add(extra);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             return messageNode;
         }
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 3
-                        || !messageNode.get(1).isTextual()
-                        || !messageNode.get(2).isObject())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isString())
+                        || !messageNode.get(2).isJsonObject())
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                String authMethod = messageNode.get(1).asText();
-                ObjectNode extra = (ObjectNode) messageNode.get(2);
+                String authMethod = messageNode.get(1).getAsString();
+                JsonObject extra = messageNode.get(2).getAsJsonObject();
                 return new ChallengeMessage(authMethod, extra);
             }
         }
@@ -262,34 +258,34 @@ public class WampMessages {
     public static class AuthenticateMessage extends WampMessage {
         public final static int ID = 5;
         public String signature;
-        public ObjectNode extra;
+        public JsonObject extra;
 
-        public AuthenticateMessage(String signature, ObjectNode extra) {
+        public AuthenticateMessage(String signature, JsonObject extra) {
             this.signature = signature;
             this.extra = extra;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(signature);
             if (extra != null)
                 messageNode.add(extra);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             return messageNode;
         }
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 3
-                        || !messageNode.get(1).isTextual()
-                        || !messageNode.get(2).isObject())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isString())
+                        || !messageNode.get(2).isJsonObject())
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                String signature = messageNode.get(1).asText();
-                ObjectNode extra = (ObjectNode) messageNode.get(2);
+                String signature = messageNode.get(1).getAsString();
+                JsonObject extra = messageNode.get(2).getAsJsonObject();
                 return new AuthenticateMessage(signature, extra);
             }
         }
@@ -301,35 +297,36 @@ public class WampMessages {
      */
     public static class GoodbyeMessage extends WampMessage {
         public final static int ID = 6;
-        public ObjectNode details;
+        public JsonObject details;
         public String reason;
 
-        public GoodbyeMessage(ObjectNode details, String reason) {
+        public GoodbyeMessage(JsonObject details, String reason) {
             this.details = details;
             this.reason = reason;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             if (details != null)
                 messageNode.add(details);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             messageNode.add(reason);
             return messageNode;
         }
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode)
+            public WampMessage fromObjectArray(JsonArray messageNode)
                     throws WampError {
-                if (messageNode.size() != 3 || !messageNode.get(1).isObject()
-                        || !messageNode.get(2).isTextual())
+                if (messageNode.size() != 3
+                        || !messageNode.get(1).isJsonObject()
+                        || !(messageNode.get(2).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isString()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                ObjectNode details = (ObjectNode) messageNode.get(1);
-                String reason = messageNode.get(2).asText();
+                JsonObject details = messageNode.get(1).getAsJsonObject();
+                String reason = messageNode.get(2).getAsString();
                 return new GoodbyeMessage(details, reason);
             }
         }
@@ -347,14 +344,14 @@ public class WampMessages {
         public final static int ID = 8;
         public int requestType;
         public long requestId;
-        public ObjectNode details;
+        public JsonObject details;
         public String error;
-        public ArrayNode arguments;
-        public ObjectNode argumentsKw;
+        public JsonArray arguments;
+        public JsonObject argumentsKw;
 
         public ErrorMessage(int requestType, long requestId,
-                ObjectNode details, String error, ArrayNode arguments,
-                ObjectNode argumentsKw) {
+                            JsonObject details, String error, JsonArray arguments,
+                            JsonObject argumentsKw) {
             this.requestType = requestType;
             this.requestId = requestId;
             this.details = details;
@@ -363,20 +360,20 @@ public class WampMessages {
             this.argumentsKw = argumentsKw;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestType);
             messageNode.add(requestId);
             if (details != null)
                 messageNode.add(details);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             messageNode.add(error);
             if (arguments != null)
                 messageNode.add(arguments);
             else if (argumentsKw != null)
-                messageNode.add(mapper.createArrayNode());
+                messageNode.add(new JsonArray());
             if (argumentsKw != null)
                 messageNode.add(argumentsKw);
             return messageNode;
@@ -384,29 +381,29 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() < 5 || messageNode.size() > 7
-                        || !messageNode.get(1).canConvertToInt()
-                        || !messageNode.get(2).canConvertToLong()
-                        || !messageNode.get(3).isObject()
-                        || !messageNode.get(4).isTextual())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !(messageNode.get(2).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isNumber())
+                        || !messageNode.get(3).isJsonObject()
+                        || !(messageNode.get(4).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isString()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                int requestType = messageNode.get(1).asInt();
-                long requestId = messageNode.get(2).asLong();
-                ObjectNode details = (ObjectNode) messageNode.get(3);
-                String error = messageNode.get(4).asText();
-                ArrayNode arguments = null;
-                ObjectNode argumentsKw = null;
+                int requestType = messageNode.get(1).getAsInt();
+                long requestId = messageNode.get(2).getAsLong();
+                JsonObject details = messageNode.get(3).getAsJsonObject();
+                String error = messageNode.get(4).getAsString();
+                JsonArray arguments = null;
+                JsonObject argumentsKw = null;
 
                 if (messageNode.size() >= 6) {
-                    if (!messageNode.get(5).isArray())
+                    if (!messageNode.get(5).isJsonArray())
                         throw new WampError(ApplicationError.INVALID_MESSAGE);
-                    arguments = (ArrayNode) messageNode.get(5);
+                    arguments = (JsonArray) messageNode.get(5);
                     if (messageNode.size() >= 7) {
-                        if (!messageNode.get(6).isObject())
+                        if (!messageNode.get(6).isJsonObject())
                             throw new WampError(ApplicationError.INVALID_MESSAGE);
-                        argumentsKw = (ObjectNode) messageNode.get(6);
+                        argumentsKw = (JsonObject) messageNode.get(6);
                     }
                 }
 
@@ -425,13 +422,13 @@ public class WampMessages {
     public static class PublishMessage extends WampMessage {
         public final static int ID = 16;
         public long requestId;
-        public ObjectNode options;
+        public JsonObject options;
         public String topic;
-        public ArrayNode arguments;
-        public ObjectNode argumentsKw;
+        public JsonArray arguments;
+        public JsonObject argumentsKw;
 
-        public PublishMessage(long requestId, ObjectNode options, String topic,
-                ArrayNode arguments, ObjectNode argumentsKw) {
+        public PublishMessage(long requestId, JsonObject options, String topic,
+                              JsonArray arguments, JsonObject argumentsKw) {
             this.requestId = requestId;
             this.options = options;
             this.topic = topic;
@@ -439,19 +436,19 @@ public class WampMessages {
             this.argumentsKw = argumentsKw;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             if (options != null)
                 messageNode.add(options);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             messageNode.add(topic);
             if (arguments != null)
                 messageNode.add(arguments);
             else if (argumentsKw != null)
-                messageNode.add(mapper.createArrayNode());
+                messageNode.add(new JsonArray());
             if (argumentsKw != null)
                 messageNode.add(argumentsKw);
             return messageNode;
@@ -459,27 +456,27 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() < 4 || messageNode.size() > 6
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).isObject()
-                        || !messageNode.get(3).isTextual())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !messageNode.get(2).isJsonObject()
+                        || !(messageNode.get(3).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(3)).isString()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                ObjectNode options = (ObjectNode) messageNode.get(2);
-                String topic = messageNode.get(3).asText();
-                ArrayNode arguments = null;
-                ObjectNode argumentsKw = null;
+                long requestId = messageNode.get(1).getAsLong();
+                JsonObject options = (JsonObject) messageNode.get(2);
+                String topic = messageNode.get(3).getAsString();
+                JsonArray arguments = null;
+                JsonObject argumentsKw = null;
 
                 if (messageNode.size() >= 5) {
-                    if (!messageNode.get(4).isArray())
+                    if (!messageNode.get(4).isJsonArray())
                         throw new WampError(ApplicationError.INVALID_MESSAGE);
-                    arguments = (ArrayNode) messageNode.get(4);
+                    arguments = (JsonArray) messageNode.get(4);
                     if (messageNode.size() >= 6) {
-                        if (!messageNode.get(5).isObject())
+                        if (!messageNode.get(5).isJsonObject())
                             throw new WampError(ApplicationError.INVALID_MESSAGE);
-                        argumentsKw = (ObjectNode) messageNode.get(5);
+                        argumentsKw = (JsonObject) messageNode.get(5);
                     }
                 }
 
@@ -503,8 +500,8 @@ public class WampMessages {
             this.publicationId = publicationId;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             messageNode.add(publicationId);
@@ -513,14 +510,14 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 3
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).canConvertToLong())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !(messageNode.get(2).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isNumber()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                long publicationId = messageNode.get(2).asLong();
+                long requestId = messageNode.get(1).getAsLong();
+                long publicationId = messageNode.get(2).getAsLong();
 
                 return new PublishedMessage(requestId, publicationId);
             }
@@ -534,39 +531,39 @@ public class WampMessages {
     public static class SubscribeMessage extends WampMessage {
         public final static int ID = 32;
         public long requestId;
-        public ObjectNode options;
+        public JsonObject options;
         public String topic;
 
-        public SubscribeMessage(long requestId, ObjectNode options, String topic) {
+        public SubscribeMessage(long requestId, JsonObject options, String topic) {
             this.requestId = requestId;
             this.options = options;
             this.topic = topic;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             if (options != null)
                 messageNode.add(options);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             messageNode.add(topic);
             return messageNode;
         }
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 4
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).isObject()
-                        || !messageNode.get(3).isTextual())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !messageNode.get(2).isJsonObject()
+                        || !(messageNode.get(3).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(3)).isString()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                ObjectNode options = (ObjectNode) messageNode.get(2);
-                String topic = messageNode.get(3).asText();
+                long requestId = messageNode.get(1).getAsLong();
+                JsonObject options = (JsonObject) messageNode.get(2);
+                String topic = messageNode.get(3).getAsString();
 
                 return new SubscribeMessage(requestId, options, topic);
             }
@@ -587,8 +584,8 @@ public class WampMessages {
             this.subscriptionId = subscriptionId;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             messageNode.add(subscriptionId);
@@ -597,14 +594,14 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 3
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).canConvertToLong())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !(messageNode.get(2).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isNumber()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                long subscriptionId = messageNode.get(2).asLong();
+                long requestId = messageNode.get(1).getAsLong();
+                long subscriptionId = messageNode.get(2).getAsLong();
 
                 return new SubscribedMessage(requestId, subscriptionId);
             }
@@ -625,8 +622,8 @@ public class WampMessages {
             this.subscriptionId = subsriptionId;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             messageNode.add(subscriptionId);
@@ -635,14 +632,14 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 3
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).canConvertToLong())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !(messageNode.get(2).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isNumber()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                long subscriptionId = messageNode.get(2).asLong();
+                long requestId = messageNode.get(1).getAsLong();
+                long subscriptionId = messageNode.get(2).getAsLong();
 
                 return new UnsubscribeMessage(requestId, subscriptionId);
             }
@@ -661,8 +658,8 @@ public class WampMessages {
             this.requestId = requestId;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             return messageNode;
@@ -670,12 +667,12 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 2
-                        || !messageNode.get(1).canConvertToLong())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
+                long requestId = messageNode.get(1).getAsLong();
 
                 return new UnsubscribedMessage(requestId);
             }
@@ -694,12 +691,12 @@ public class WampMessages {
         public final static int ID = 36;
         public long subscriptionId;
         public long publicationId;
-        public ObjectNode details;
-        public ArrayNode arguments;
-        public ObjectNode argumentsKw;
+        public JsonObject details;
+        public JsonArray arguments;
+        public JsonObject argumentsKw;
 
         public EventMessage(long subscriptionId, long publicationId,
-                ObjectNode details, ArrayNode arguments, ObjectNode argumentsKw) {
+                            JsonObject details, JsonArray arguments, JsonObject argumentsKw) {
             this.subscriptionId = subscriptionId;
             this.publicationId = publicationId;
             this.details = details;
@@ -707,19 +704,19 @@ public class WampMessages {
             this.argumentsKw = argumentsKw;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(subscriptionId);
             messageNode.add(publicationId);
             if (details != null)
                 messageNode.add(details);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             if (arguments != null)
                 messageNode.add(arguments);
             else if (argumentsKw != null)
-                messageNode.add(mapper.createArrayNode());
+                messageNode.add(new JsonArray());
             if (argumentsKw != null)
                 messageNode.add(argumentsKw);
             return messageNode;
@@ -727,27 +724,27 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() < 4 || messageNode.size() > 6
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).canConvertToLong()
-                        || !messageNode.get(3).isObject())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !(messageNode.get(2).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isNumber())
+                        || !messageNode.get(3).isJsonObject())
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long subscriptionId = messageNode.get(1).asLong();
-                long publicationId = messageNode.get(2).asLong();
-                ObjectNode details = (ObjectNode) messageNode.get(3);
-                ArrayNode arguments = null;
-                ObjectNode argumentsKw = null;
+                long subscriptionId = messageNode.get(1).getAsLong();
+                long publicationId = messageNode.get(2).getAsLong();
+                JsonObject details = (JsonObject) messageNode.get(3);
+                JsonArray arguments = null;
+                JsonObject argumentsKw = null;
 
                 if (messageNode.size() >= 5) {
-                    if (!messageNode.get(4).isArray())
+                    if (!messageNode.get(4).isJsonArray())
                         throw new WampError(ApplicationError.INVALID_MESSAGE);
-                    arguments = (ArrayNode) messageNode.get(4);
+                    arguments = (JsonArray) messageNode.get(4);
                     if (messageNode.size() >= 6) {
-                        if (!messageNode.get(5).isObject())
+                        if (!messageNode.get(5).isJsonObject())
                             throw new WampError(ApplicationError.INVALID_MESSAGE);
-                        argumentsKw = (ObjectNode) messageNode.get(5);
+                        argumentsKw = (JsonObject) messageNode.get(5);
                     }
                 }
 
@@ -766,13 +763,13 @@ public class WampMessages {
     public static class CallMessage extends WampMessage {
         public final static int ID = 48;
         public long requestId;
-        public ObjectNode options;
+        public JsonObject options;
         public String procedure;
-        public ArrayNode arguments;
-        public ObjectNode argumentsKw;
+        public JsonArray arguments;
+        public JsonObject argumentsKw;
 
-        public CallMessage(long requestId, ObjectNode options, String procedure,
-                ArrayNode arguments, ObjectNode argumentsKw) {
+        public CallMessage(long requestId, JsonObject options, String procedure,
+                           JsonArray arguments, JsonObject argumentsKw) {
             this.requestId = requestId;
             this.options = options;
             this.procedure = procedure;
@@ -780,19 +777,19 @@ public class WampMessages {
             this.argumentsKw = argumentsKw;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             if (options != null)
                 messageNode.add(options);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             messageNode.add(procedure);
             if (arguments != null)
                 messageNode.add(arguments);
             else if (argumentsKw != null)
-                messageNode.add(mapper.createArrayNode());
+                messageNode.add(new JsonArray());
             if (argumentsKw != null)
                 messageNode.add(argumentsKw);
             return messageNode;
@@ -800,27 +797,27 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() < 4 || messageNode.size() > 6
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).isObject()
-                        || !messageNode.get(3).isTextual())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !messageNode.get(2).isJsonObject()
+                        || !(messageNode.get(3).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(3)).isString()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                ObjectNode options = (ObjectNode) messageNode.get(2);
-                String procedure = messageNode.get(3).asText();
-                ArrayNode arguments = null;
-                ObjectNode argumentsKw = null;
+                long requestId = messageNode.get(1).getAsLong();
+                JsonObject options = (JsonObject) messageNode.get(2);
+                String procedure = messageNode.get(3).getAsString();
+                JsonArray arguments = null;
+                JsonObject argumentsKw = null;
 
                 if (messageNode.size() >= 5) {
-                    if (!messageNode.get(4).isArray())
+                    if (!messageNode.get(4).isJsonArray())
                         throw new WampError(ApplicationError.INVALID_MESSAGE);
-                    arguments = (ArrayNode) messageNode.get(4);
+                    arguments = (JsonArray) messageNode.get(4);
                     if (messageNode.size() >= 6) {
-                        if (!messageNode.get(5).isObject())
+                        if (!messageNode.get(5).isJsonObject())
                             throw new WampError(ApplicationError.INVALID_MESSAGE);
-                        argumentsKw = (ObjectNode) messageNode.get(5);
+                        argumentsKw = (JsonObject) messageNode.get(5);
                     }
                 }
 
@@ -839,30 +836,30 @@ public class WampMessages {
     public static class ResultMessage extends WampMessage {
         public final static int ID = 50;
         public long requestId;
-        public ObjectNode details;
-        public ArrayNode arguments;
-        public ObjectNode argumentsKw;
+        public JsonObject details;
+        public JsonArray arguments;
+        public JsonObject argumentsKw;
 
-        public ResultMessage(long requestId, ObjectNode details,
-                ArrayNode arguments, ObjectNode argumentsKw) {
+        public ResultMessage(long requestId, JsonObject details,
+                             JsonArray arguments, JsonObject argumentsKw) {
             this.requestId = requestId;
             this.details = details;
             this.arguments = arguments;
             this.argumentsKw = argumentsKw;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             if (details != null)
                 messageNode.add(details);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             if (arguments != null)
                 messageNode.add(arguments);
             else if (argumentsKw != null)
-                messageNode.add(mapper.createArrayNode());
+                messageNode.add(new JsonArray());
             if (argumentsKw != null)
                 messageNode.add(argumentsKw);
             return messageNode;
@@ -870,25 +867,25 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() < 3 || messageNode.size() > 5
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).isObject())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !messageNode.get(2).isJsonObject())
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                ObjectNode details = (ObjectNode) messageNode.get(2);
-                ArrayNode arguments = null;
-                ObjectNode argumentsKw = null;
+                long requestId = messageNode.get(1).getAsLong();
+                JsonObject details = (JsonObject) messageNode.get(2);
+                JsonArray arguments = null;
+                JsonObject argumentsKw = null;
 
                 if (messageNode.size() >= 4) {
-                    if (!messageNode.get(3).isArray())
+                    if (!messageNode.get(3).isJsonArray())
                         throw new WampError(ApplicationError.INVALID_MESSAGE);
-                    arguments = (ArrayNode) messageNode.get(3);
+                    arguments = (JsonArray) messageNode.get(3);
                     if (messageNode.size() >= 5) {
-                        if (!messageNode.get(4).isObject())
+                        if (!messageNode.get(4).isJsonObject())
                             throw new WampError(ApplicationError.INVALID_MESSAGE);
-                        argumentsKw = (ObjectNode) messageNode.get(4);
+                        argumentsKw = (JsonObject) messageNode.get(4);
                     }
                 }
 
@@ -905,39 +902,39 @@ public class WampMessages {
     public static class RegisterMessage extends WampMessage {
         public final static int ID = 64;
         public long requestId;
-        public ObjectNode options;
+        public JsonObject options;
         public String procedure;
 
-        public RegisterMessage(long requestId, ObjectNode options, String procedure) {
+        public RegisterMessage(long requestId, JsonObject options, String procedure) {
             this.requestId = requestId;
             this.options = options;
             this.procedure = procedure;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             if (options != null)
                 messageNode.add(options);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             messageNode.add(procedure);
             return messageNode;
         }
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 4
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).isObject()
-                        || !messageNode.get(3).isTextual())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !messageNode.get(2).isJsonObject()
+                        || !(messageNode.get(3).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(3)).isString()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                ObjectNode options = (ObjectNode) messageNode.get(2);
-                String procedure = messageNode.get(3).asText();
+                long requestId = messageNode.get(1).getAsLong();
+                JsonObject options = (JsonObject) messageNode.get(2);
+                String procedure = messageNode.get(3).getAsString();
 
                 return new RegisterMessage(requestId, options, procedure);
             }
@@ -958,8 +955,8 @@ public class WampMessages {
             this.registrationId = registrationId;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             messageNode.add(registrationId);
@@ -968,14 +965,14 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 3
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).canConvertToLong())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !(messageNode.get(2).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isNumber()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                long registrationId = messageNode.get(2).asLong();
+                long requestId = messageNode.get(1).getAsLong();
+                long registrationId = messageNode.get(2).getAsLong();
 
                 return new RegisteredMessage(requestId, registrationId);
             }
@@ -985,7 +982,7 @@ public class WampMessages {
     /**
      * A Callees request to unregister a previsouly established registration.
      * [UNREGISTER, Request|id, REGISTERED.Registration|id]
-     * 
+     *
      */
     public static class UnregisterMessage extends WampMessage {
         public final static int ID = 66;
@@ -997,8 +994,8 @@ public class WampMessages {
             this.registrationId = registrationId;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             messageNode.add(registrationId);
@@ -1007,15 +1004,15 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode)
+            public WampMessage fromObjectArray(JsonArray messageNode)
                     throws WampError {
                 if (messageNode.size() != 3
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).canConvertToLong())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !(messageNode.get(2).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isNumber()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                long registrationId = messageNode.get(2).asLong();
+                long requestId = messageNode.get(1).getAsLong();
+                long registrationId = messageNode.get(2).getAsLong();
 
                 return new UnregisterMessage(requestId, registrationId);
             }
@@ -1034,8 +1031,8 @@ public class WampMessages {
             this.requestId = requestId;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             return messageNode;
@@ -1043,12 +1040,12 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() != 2
-                        || !messageNode.get(1).canConvertToLong())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber()))
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
+                long requestId = messageNode.get(1).getAsLong();
 
                 return new UnregisteredMessage(requestId);
             }
@@ -1066,12 +1063,12 @@ public class WampMessages {
         public final static int ID = 68;
         public long requestId;
         public long registrationId;
-        public ObjectNode details;
-        public ArrayNode arguments;
-        public ObjectNode argumentsKw;
+        public JsonObject details;
+        public JsonArray arguments;
+        public JsonObject argumentsKw;
 
         public InvocationMessage(long requestId, long registrationId,
-                ObjectNode details, ArrayNode arguments, ObjectNode argumentsKw) {
+                                 JsonObject details, JsonArray arguments, JsonObject argumentsKw) {
             this.requestId = requestId;
             this.registrationId = registrationId;
             this.details = details;
@@ -1079,19 +1076,19 @@ public class WampMessages {
             this.argumentsKw = argumentsKw;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             messageNode.add(registrationId);
             if (details != null)
                 messageNode.add(details);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             if (arguments != null)
                 messageNode.add(arguments);
             else if (argumentsKw != null)
-                messageNode.add(mapper.createArrayNode());
+                messageNode.add(new JsonArray());
             if (argumentsKw != null)
                 messageNode.add(argumentsKw);
             return messageNode;
@@ -1099,27 +1096,27 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() < 4 || messageNode.size() > 6
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).canConvertToLong()
-                        || !messageNode.get(3).isObject())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !(messageNode.get(2).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(2)).isNumber())
+                        || !messageNode.get(3).isJsonObject())
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                long registrationId = messageNode.get(2).asLong();
-                ObjectNode details = (ObjectNode) messageNode.get(3);
-                ArrayNode arguments = null;
-                ObjectNode argumentsKw = null;
+                long requestId = messageNode.get(1).getAsLong();
+                long registrationId = messageNode.get(2).getAsLong();
+                JsonObject details = (JsonObject) messageNode.get(3);
+                JsonArray arguments = null;
+                JsonObject argumentsKw = null;
 
                 if (messageNode.size() >= 5) {
-                    if (!messageNode.get(4).isArray())
+                    if (!messageNode.get(4).isJsonArray())
                         throw new WampError(ApplicationError.INVALID_MESSAGE);
-                    arguments = (ArrayNode) messageNode.get(4);
+                    arguments = (JsonArray) messageNode.get(4);
                     if (messageNode.size() >= 6) {
-                        if (!messageNode.get(5).isObject())
+                        if (!messageNode.get(5).isJsonObject())
                             throw new WampError(ApplicationError.INVALID_MESSAGE);
-                        argumentsKw = (ObjectNode) messageNode.get(5);
+                        argumentsKw = (JsonObject) messageNode.get(5);
                     }
                 }
 
@@ -1138,30 +1135,30 @@ public class WampMessages {
     public static class YieldMessage extends WampMessage {
         public final static int ID = 70;
         public long requestId;
-        public ObjectNode options;
-        public ArrayNode arguments;
-        public ObjectNode argumentsKw;
+        public JsonObject options;
+        public JsonArray arguments;
+        public JsonObject argumentsKw;
 
-        public YieldMessage(long requestId, ObjectNode options,
-                ArrayNode arguments, ObjectNode argumentsKw) {
+        public YieldMessage(long requestId, JsonObject options,
+                            JsonArray arguments, JsonObject argumentsKw) {
             this.requestId = requestId;
             this.options = options;
             this.arguments = arguments;
             this.argumentsKw = argumentsKw;
         }
 
-        public JsonNode toObjectArray(ObjectMapper mapper) throws WampError {
-            ArrayNode messageNode = mapper.createArrayNode();
+        public JsonArray toObjectArray() throws WampError {
+            JsonArray messageNode = new JsonArray();
             messageNode.add(ID);
             messageNode.add(requestId);
             if (options != null)
                 messageNode.add(options);
             else
-                messageNode.add(mapper.createObjectNode());
+                messageNode.add(new JsonObject());
             if (arguments != null)
                 messageNode.add(arguments);
             else if (argumentsKw != null)
-                messageNode.add(mapper.createArrayNode());
+                messageNode.add(new JsonArray());
             if (argumentsKw != null)
                 messageNode.add(argumentsKw);
             return messageNode;
@@ -1169,25 +1166,25 @@ public class WampMessages {
 
         static class Factory implements WampMessageFactory {
             @Override
-            public WampMessage fromObjectArray(ArrayNode messageNode) throws WampError {
+            public WampMessage fromObjectArray(JsonArray messageNode) throws WampError {
                 if (messageNode.size() < 3 || messageNode.size() > 5
-                        || !messageNode.get(1).canConvertToLong()
-                        || !messageNode.get(2).isObject())
+                        || !(messageNode.get(1).isJsonPrimitive() && ((JsonPrimitive)messageNode.get(1)).isNumber())
+                        || !messageNode.get(2).isJsonObject())
                     throw new WampError(ApplicationError.INVALID_MESSAGE);
 
-                long requestId = messageNode.get(1).asLong();
-                ObjectNode options = (ObjectNode) messageNode.get(2);
-                ArrayNode arguments = null;
-                ObjectNode argumentsKw = null;
+                long requestId = messageNode.get(1).getAsLong();
+                JsonObject options = (JsonObject) messageNode.get(2);
+                JsonArray arguments = null;
+                JsonObject argumentsKw = null;
 
                 if (messageNode.size() >= 4) {
-                    if (!messageNode.get(3).isArray())
+                    if (!messageNode.get(3).isJsonArray())
                         throw new WampError(ApplicationError.INVALID_MESSAGE);
-                    arguments = (ArrayNode) messageNode.get(3);
+                    arguments = (JsonArray) messageNode.get(3);
                     if (messageNode.size() >= 5) {
-                        if (!messageNode.get(4).isObject())
+                        if (!messageNode.get(4).isJsonObject())
                             throw new WampError(ApplicationError.INVALID_MESSAGE);
-                        argumentsKw = (ObjectNode) messageNode.get(4);
+                        argumentsKw = (JsonObject) messageNode.get(4);
                     }
                 }
 

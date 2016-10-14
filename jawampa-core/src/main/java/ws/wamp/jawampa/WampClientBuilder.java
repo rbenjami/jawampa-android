@@ -16,20 +16,19 @@
 
 package ws.wamp.jawampa;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import com.google.gson.Gson;
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
 import ws.wamp.jawampa.client.ClientConfiguration;
 import ws.wamp.jawampa.connection.IWampClientConnectionConfig;
 import ws.wamp.jawampa.connection.IWampConnector;
 import ws.wamp.jawampa.connection.IWampConnectorProvider;
 import ws.wamp.jawampa.internal.UriValidator;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * WampClientBuilder is the builder object which allows to create
@@ -54,7 +53,7 @@ public class WampClientBuilder {
     private IWampClientConnectionConfig connectionConfiguration = null;
     private IWampConnectorProvider connectorProvider = null;
 
-    private ObjectMapper objectMapper = null;
+    private Gson gson = null;
     
     /** The default reconnect interval in milliseconds.<br>This is set to 5s */
     public static final int DEFAULT_RECONNECT_INTERVAL = 5000;
@@ -128,14 +127,14 @@ public class WampClientBuilder {
             connectorProvider.createConnector(routerUri, connectionConfiguration, serializations);
 
         // Use default object mapper
-        if (objectMapper == null)
-            objectMapper = new ObjectMapper();
+        if ( gson == null)
+            gson = new Gson();
         
         ClientConfiguration clientConfig =
             new ClientConfiguration(
                 closeOnErrors, authId, authMethods, routerUri, realm,
                 useStrictUriValidation, rolesArray, nrReconnects, reconnectInterval,
-                connectorProvider, connector, objectMapper);
+                connectorProvider, connector, gson );
         
         return new WampClient(clientConfig);
     }
@@ -318,15 +317,14 @@ public class WampClientBuilder {
    }
 
   /**
-   * Set custom, pre-configured {@link ObjectMapper}.
+   * Set custom, pre-configured {@link Gson}.
    * This instance will be used instead of default for serialization and deserialization.
-   * @param objectMapper The {@link ObjectMapper} instance
+   * @param gson The {@link Gson} instance
    * @return The {@link WampClientBuilder} object
    */
-    public WampClientBuilder withObjectMapper(ObjectMapper objectMapper)
+    public WampClientBuilder withGson(Gson gson)
     {
-        this.objectMapper = objectMapper;
+        this.gson = gson;
         return this;
     }
-
 }

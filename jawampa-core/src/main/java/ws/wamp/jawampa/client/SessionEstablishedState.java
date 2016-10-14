@@ -16,55 +16,22 @@
 
 package ws.wamp.jawampa.client;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map.Entry;
-
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import rx.Subscriber;
 import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.subjects.AsyncSubject;
 import rx.subscriptions.Subscriptions;
-import ws.wamp.jawampa.ApplicationError;
-import ws.wamp.jawampa.CallFlags;
-import ws.wamp.jawampa.PubSubData;
-import ws.wamp.jawampa.PublishFlags;
-import ws.wamp.jawampa.RegisterFlags;
-import ws.wamp.jawampa.Reply;
-import ws.wamp.jawampa.Request;
-import ws.wamp.jawampa.SubscriptionFlags;
-import ws.wamp.jawampa.WampClient;
-import ws.wamp.jawampa.WampMessages;
-import ws.wamp.jawampa.WampRoles;
-import ws.wamp.jawampa.WampMessages.AbortMessage;
-import ws.wamp.jawampa.WampMessages.CallMessage;
-import ws.wamp.jawampa.WampMessages.ChallengeMessage;
-import ws.wamp.jawampa.WampMessages.ErrorMessage;
-import ws.wamp.jawampa.WampMessages.EventMessage;
-import ws.wamp.jawampa.WampMessages.GoodbyeMessage;
-import ws.wamp.jawampa.WampMessages.InvocationMessage;
-import ws.wamp.jawampa.WampMessages.PublishedMessage;
-import ws.wamp.jawampa.WampMessages.RegisterMessage;
-import ws.wamp.jawampa.WampMessages.RegisteredMessage;
-import ws.wamp.jawampa.WampMessages.ResultMessage;
-import ws.wamp.jawampa.WampMessages.SubscribeMessage;
-import ws.wamp.jawampa.WampMessages.SubscribedMessage;
-import ws.wamp.jawampa.WampMessages.UnregisterMessage;
-import ws.wamp.jawampa.WampMessages.UnregisteredMessage;
-import ws.wamp.jawampa.WampMessages.UnsubscribeMessage;
-import ws.wamp.jawampa.WampMessages.UnsubscribedMessage;
-import ws.wamp.jawampa.WampMessages.WampMessage;
-import ws.wamp.jawampa.WampMessages.WelcomeMessage;
+import ws.wamp.jawampa.*;
+import ws.wamp.jawampa.WampMessages.*;
 import ws.wamp.jawampa.connection.IConnectionController;
 import ws.wamp.jawampa.connection.IWampConnectionPromise;
 import ws.wamp.jawampa.internal.IdGenerator;
 import ws.wamp.jawampa.internal.IdValidator;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * The client is connected to the router and the session was established
@@ -122,7 +89,7 @@ public class SessionEstablishedState implements ClientState {
     
     private final StateController stateController;
     final long sessionId;
-    final ObjectNode welcomeDetails;
+    final JsonObject welcomeDetails;
     final EnumSet<WampRoles> routerRoles;
     
     /** The currently active connection */
@@ -143,8 +110,8 @@ public class SessionEstablishedState implements ClientState {
     
     long lastRequestId = IdValidator.MIN_VALID_ID;
     
-    public SessionEstablishedState(StateController stateController, IConnectionController connectionController,
-            long sessionId, ObjectNode welcomeDetails, EnumSet<WampRoles> routerRoles) {
+    public SessionEstablishedState( StateController stateController, IConnectionController connectionController,
+                                    long sessionId, JsonObject welcomeDetails, EnumSet<WampRoles> routerRoles ) {
         this.stateController = stateController;
         this.connectionController = connectionController;
         this.sessionId = sessionId;
@@ -416,22 +383,22 @@ public class SessionEstablishedState implements ClientState {
         }
     }
     
-    public void performPublish(final String topic, final EnumSet<PublishFlags> flags, final ArrayNode arguments,
-        final ObjectNode argumentsKw, AsyncSubject<Long> resultSubject)
+    public void performPublish(final String topic, final EnumSet<PublishFlags> flags, final JsonArray arguments,
+        final JsonObject argumentsKw, AsyncSubject<Long> resultSubject)
     {
         final long requestId = IdGenerator.newLinearId(lastRequestId, requestMap);
         lastRequestId = requestId;
 
-        ObjectNode options = stateController.clientConfig().objectMapper().createObjectNode();
+        JsonObject options = new JsonObject();
         if (flags != null && flags.contains(PublishFlags.DontExcludeMe)) {
-            options.put("exclude_me", false);
+            options.addProperty("exclude_me", false);
         }
         
         if (flags != null && flags.contains(PublishFlags.RequireAcknowledge)) {
             // An acknowledge from the router in the form of a PUBLISHED or ERROR message
             // is expected. The request is stored in the requestMap and the resultSubject will be
             // completed once a response was received.
-            options.put("acknowledge", true);
+            options.addProperty("acknowledge", true);
             requestMap.put(requestId, new RequestMapEntry(WampMessages.PublishMessage.ID, resultSubject));
         } else {
             // No acknowledge will be sent from the router.
@@ -448,18 +415,18 @@ public class SessionEstablishedState implements ClientState {
     
     public void performCall(final String procedure,
             final EnumSet<CallFlags> flags,
-            final ArrayNode arguments,
-            final ObjectNode argumentsKw,
+            final JsonArray arguments,
+            final JsonObject argumentsKw,
             final AsyncSubject<Reply> resultSubject)
     {
         final long requestId = IdGenerator.newLinearId(lastRequestId, requestMap);
         lastRequestId = requestId;
+
+        JsonObject options = new JsonObject();
         
-        ObjectNode options = stateController.clientConfig().objectMapper().createObjectNode();
-        
-        boolean discloseMe = flags != null && flags.contains(CallFlags.DiscloseMe) ? true : false;
+        boolean discloseMe = flags != null && flags.contains( CallFlags.DiscloseMe );
         if (discloseMe) {
-            options.put("disclose_me", discloseMe);
+            options.addProperty("disclose_me", true );
         }
         
         final CallMessage callMsg = new CallMessage(requestId, options, procedure, 
@@ -488,9 +455,9 @@ public class SessionEstablishedState implements ClientState {
         final long requestId = IdGenerator.newLinearId(lastRequestId, requestMap);
         lastRequestId = requestId;
 
-        ObjectNode options = stateController.clientConfig().objectMapper().createObjectNode();
+        JsonObject options = new JsonObject();
         if (flags != null && flags.contains(RegisterFlags.DiscloseCaller)) {
-            options.put("disclose_caller", true);
+            options.addProperty("disclose_caller", true);
         }
 
         final RegisterMessage msg = new RegisterMessage(requestId, options, topic);
@@ -522,7 +489,7 @@ public class SessionEstablishedState implements ClientState {
 
                 boolean isClosed = false;
                 if (t1 instanceof ApplicationError &&
-                        ((ApplicationError)t1).uri().equals(ApplicationError.TRANSPORT_CLOSED))
+                        ((ApplicationError)t1).getUri().equals(ApplicationError.TRANSPORT_CLOSED))
                     isClosed = true;
                 
                 if (isClosed) subscriber.onCompleted();
@@ -611,10 +578,10 @@ public class SessionEstablishedState implements ClientState {
             final long requestId = IdGenerator.newLinearId(lastRequestId, requestMap);
             lastRequestId = requestId;
 
-            ObjectNode options = null;
+            JsonObject options = null;
             if (flags != SubscriptionFlags.Exact) {
-                options = stateController.clientConfig().objectMapper().createObjectNode();
-                options.put("match", flags.name().toLowerCase());
+                options = new JsonObject();
+                options.addProperty("match", flags.name().toLowerCase());
             }
             final SubscribeMessage msg = new SubscribeMessage(requestId, options, topic);
 
@@ -649,7 +616,7 @@ public class SessionEstablishedState implements ClientState {
 
                     boolean isClosed = false;
                     if (t1 instanceof ApplicationError &&
-                            ((ApplicationError)t1).uri().equals(ApplicationError.TRANSPORT_CLOSED))
+                            ((ApplicationError)t1).getUri().equals(ApplicationError.TRANSPORT_CLOSED))
                         isClosed = true;
 
                     for (Subscriber<? super PubSubData> s : newEntry.subscribers) {

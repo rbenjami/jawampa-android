@@ -16,25 +16,27 @@
 
 package ws.wamp.jawampa;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
-public class Reply {
-    
-    final ArrayNode arguments;
-    final ObjectNode keywordArguments;
-    
-    public ArrayNode arguments() {
-        return arguments;
-    }
-    
-    public ObjectNode keywordArguments() {
-        return keywordArguments;
-    }
+public class Reply
+{
+    private final JsonArray  arguments;
+    private final JsonObject keywordArguments;
 
-    public Reply(ArrayNode arguments, ObjectNode keywordArguments) {
+    public Reply( JsonArray arguments, JsonObject keywordArguments )
+    {
         this.arguments = arguments;
         this.keywordArguments = keywordArguments;
     }
 
+    public JsonArray getArguments()
+    {
+        return arguments;
+    }
+
+    public JsonObject getKeywordArguments()
+    {
+        return keywordArguments;
+    }
 }

@@ -16,43 +16,19 @@
 
 package ws.wamp.jawampa;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import rx.Observable;
 import rx.Scheduler;
 import rx.schedulers.Schedulers;
 import rx.subjects.AsyncSubject;
 import ws.wamp.jawampa.WampMessages.*;
-import ws.wamp.jawampa.connection.ICompletionCallback;
-import ws.wamp.jawampa.connection.IConnectionController;
-import ws.wamp.jawampa.connection.IWampConnection;
-import ws.wamp.jawampa.connection.IWampConnectionAcceptor;
-import ws.wamp.jawampa.connection.IWampConnectionFuture;
-import ws.wamp.jawampa.connection.IWampConnectionListener;
-import ws.wamp.jawampa.connection.IWampConnectionPromise;
-import ws.wamp.jawampa.connection.QueueingConnectionController;
-import ws.wamp.jawampa.connection.WampConnectionPromise;
-import ws.wamp.jawampa.internal.IdGenerator;
-import ws.wamp.jawampa.internal.IdValidator;
-import ws.wamp.jawampa.internal.RealmConfig;
-import ws.wamp.jawampa.internal.UriValidator;
-import ws.wamp.jawampa.internal.Version;
+import ws.wamp.jawampa.connection.*;
+import ws.wamp.jawampa.internal.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * The {@link WampRouter} provides Dealer and Broker functionality for the WAMP
@@ -72,7 +48,7 @@ public class WampRouter {
     /** Represents a realm that is exposed through the router */
     static class Realm {
         final RealmConfig config;
-        final ObjectNode welcomeDetails;
+        final JsonObject  welcomeDetails;
         final Map<Long, ClientHandler> channelsBySessionId = new HashMap<Long, ClientHandler>();
         final Map<String, Procedure> procedures = new HashMap<String, Procedure>();
         
@@ -89,20 +65,19 @@ public class WampRouter {
             subscriptionsByFlags.put(SubscriptionFlags.Wildcard, new HashMap<String, Subscription>());
 
             // Expose the roles that are configured for the realm
-            ObjectMapper objectMapper = new ObjectMapper();
-            welcomeDetails = objectMapper.createObjectNode();
-            welcomeDetails.put("agent", Version.getVersion());
-            ObjectNode routerRoles = welcomeDetails.putObject("roles");
+            welcomeDetails = new JsonObject();
+            welcomeDetails.addProperty( "agent", Version.getVersion() );
+
+            JsonObject routerRoles = new JsonObject();
             for (WampRoles role : config.roles) {
-                ObjectNode roleNode = routerRoles.putObject(role.toString());
-                if (role == WampRoles.Publisher) {
-                    ObjectNode featuresNode = roleNode.putObject("features");
-                    featuresNode.put("publisher_exclusion", true);
-                } else if (role == WampRoles.Subscriber) {
-                    ObjectNode featuresNode = roleNode.putObject("features");
-                    featuresNode.put("pattern_based_subscription", true);
-                }
+                JsonObject roleNode = new JsonObject();
+                if (role == WampRoles.Publisher)
+                    roleNode.addProperty( "publisher_exclusion", true);
+                else if (role == WampRoles.Subscriber)
+                    roleNode.addProperty( "pattern_based_subscription", true);
+                routerRoles.add( role.toString(), roleNode );
             }
+            welcomeDetails.add( "roles", routerRoles );
         }
         
         void includeChannel(ClientHandler channel, long sessionId, Set<WampRoles> roles) {
@@ -197,8 +172,8 @@ public class WampRouter {
     final ScheduledExecutorService eventLoop;
     final Scheduler scheduler;
     
-    final ObjectMapper objectMapper = new ObjectMapper();
-    
+    final Gson gson = new Gson();
+
     boolean isDisposed = false;
     AsyncSubject<Void> closedFuture = AsyncSubject.create();
     
@@ -218,11 +193,11 @@ public class WampRouter {
     }
     
     /**
-     * Returns the Jackson {@link ObjectMapper} that is used for JSON serialization,
-     * deserialization and object mapping by this router.
+     * Returns the Jackson {@link Gson} that is used for JSON serialization,
+     * deserialization.
      */
-    public ObjectMapper objectMapper() {
-        return objectMapper;
+    public Gson objectMapper() {
+        return gson;
     }
 
     WampRouter(Map<String, RealmConfig> realms) {
@@ -664,9 +639,9 @@ public class WampRouter {
             // Find subscription match type
             SubscriptionFlags flags = SubscriptionFlags.Exact;
             if (sub.options != null) {
-                JsonNode match = sub.options.get("match");
+                JsonElement match = sub.options.get("match" );
                 if (match != null) {
-                    String matchValue = match.asText();
+                    String matchValue = match.getAsString();
                     if ("prefix".equals(matchValue)) {
                         flags = SubscriptionFlags.Prefix;
                     } else if ("wildcard".equals(matchValue)) {
@@ -791,8 +766,8 @@ public class WampRouter {
             // Check whether the client wants an acknowledgement for the publication
             // Default is no
             boolean sendAcknowledge = false;
-            JsonNode ackOption = pub.options.get("acknowledge");
-            if (ackOption != null && ackOption.asBoolean() == true)
+            JsonElement ackOption = pub.options.get("acknowledge");
+            if (ackOption != null && ackOption.getAsBoolean() == true)
                 sendAcknowledge = true;
             
             String err = null;
@@ -858,10 +833,10 @@ public class WampRouter {
     }
 
     private void publishEvent(ClientHandler publisher, PublishMessage pub, long publicationId, Subscription subscription){
-        ObjectNode details = null;
+        JsonObject details = null;
         if (subscription.flags != SubscriptionFlags.Exact) {
-            details = objectMapper.createObjectNode();
-            details.put("topic", pub.topic);
+            details = new JsonObject();
+            details.addProperty("topic", pub.topic);
         }
 
         EventMessage ev = new EventMessage(subscription.subscriptionId, publicationId,
@@ -871,9 +846,9 @@ public class WampRouter {
             if (receiver == publisher ) { // Potentially skip the publisher
                 boolean skipPublisher = true;
                 if (pub.options != null) {
-                    JsonNode excludeMeNode = pub.options.get("exclude_me");
+                    JsonElement excludeMeNode = pub.options.get("exclude_me");
                     if (excludeMeNode != null) {
-                        skipPublisher = excludeMeNode.asBoolean(true);
+                        skipPublisher = excludeMeNode.getAsBoolean();
                     }
                 }
                 if (skipPublisher) continue;
@@ -915,12 +890,12 @@ public class WampRouter {
         Set<WampRoles> roles = new HashSet<WampRoles>();
         boolean hasUnsupportedRoles = false;
         
-        JsonNode n = hello.details.get("roles");
-        if (n != null && n.isObject()) {
-            ObjectNode rolesNode = (ObjectNode) n;
-            Iterator<String> roleKeys = rolesNode.fieldNames();
-            while (roleKeys.hasNext()) {
-                WampRoles role = WampRoles.fromString(roleKeys.next());
+        JsonElement n = hello.details.get("roles");
+        if (n != null && n.isJsonObject()) {
+            JsonObject rolesNode = (JsonObject) n;
+            for ( Map.Entry<String, JsonElement> e : rolesNode.entrySet() )
+            {
+                WampRoles role = WampRoles.fromString(e.getKey());
                 if (!SUPPORTED_CLIENT_ROLES.contains(role)) hasUnsupportedRoles = true;
                 if (role != null) roles.add(role);
             }

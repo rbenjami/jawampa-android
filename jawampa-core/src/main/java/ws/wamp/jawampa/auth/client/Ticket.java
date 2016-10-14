@@ -1,9 +1,9 @@
 package ws.wamp.jawampa.auth.client;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import ws.wamp.jawampa.WampMessages.AuthenticateMessage;
 import ws.wamp.jawampa.WampMessages.ChallengeMessage;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Ticket implements ClientSideAuthentication {
 	public static final String AUTH_METHOD = "ticket";
@@ -20,8 +20,7 @@ public class Ticket implements ClientSideAuthentication {
 	}
 
 	@Override
-	public AuthenticateMessage handleChallenge(ChallengeMessage message,
-			ObjectMapper objectMapper) {
-		return new AuthenticateMessage(ticket, objectMapper.createObjectNode());
+	public AuthenticateMessage handleChallenge(ChallengeMessage message, Gson gson ) {
+		return new AuthenticateMessage(ticket, new JsonObject());
 	}
 }

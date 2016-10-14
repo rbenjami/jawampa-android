@@ -16,25 +16,20 @@
 
 package ws.wamp.jawampa.client;
 
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.List;
-
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import ws.wamp.jawampa.ApplicationError;
 import ws.wamp.jawampa.WampClient;
 import ws.wamp.jawampa.WampMessages;
+import ws.wamp.jawampa.WampMessages.*;
 import ws.wamp.jawampa.WampRoles;
-import ws.wamp.jawampa.WampMessages.AbortMessage;
-import ws.wamp.jawampa.WampMessages.AuthenticateMessage;
-import ws.wamp.jawampa.WampMessages.ChallengeMessage;
-import ws.wamp.jawampa.WampMessages.WampMessage;
-import ws.wamp.jawampa.WampMessages.WelcomeMessage;
 import ws.wamp.jawampa.auth.client.ClientSideAuthentication;
 import ws.wamp.jawampa.connection.IConnectionController;
 import ws.wamp.jawampa.connection.IWampConnectionPromise;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The state where the WAMP handshake (HELLO, WELCOME, ...) is exchanged.
@@ -129,23 +124,23 @@ public class HandshakingState implements ClientState {
         // We were not yet welcomed
         if (msg instanceof WelcomeMessage) {
             // Receive a welcome. Now the session is established!
-            ObjectNode welcomeDetails = ((WelcomeMessage) msg).details;
+            JsonObject welcomeDetails = ((WelcomeMessage) msg).details;
             long sessionId = ((WelcomeMessage) msg).sessionId;
             
             // Extract the roles of the remote side
-            JsonNode roleNode = welcomeDetails.get("roles");
-            if (roleNode == null || !roleNode.isObject()) {
+            JsonElement roleNode = welcomeDetails.get("roles" );
+            if (roleNode == null || !roleNode.isJsonObject()) {
                 handleProtocolError();
                 return;
             }
             
             EnumSet<WampRoles> routerRoles = EnumSet.noneOf(WampRoles.class);
-            Iterator<String> roleKeys = roleNode.fieldNames();
-            while (roleKeys.hasNext()) {
-                WampRoles role = WampRoles.fromString(roleKeys.next());
+            for ( Map.Entry<String, JsonElement> e : roleNode.getAsJsonObject().entrySet() )
+            {
+                WampRoles role = WampRoles.fromString(e.getKey());
                 if (role != null) routerRoles.add(role);
             }
-            
+
             SessionEstablishedState newState = new SessionEstablishedState(
                 stateController, connectionController, sessionId, welcomeDetails, routerRoles);
             stateController.setState(newState);
@@ -165,7 +160,7 @@ public class HandshakingState implements ClientState {
             for (ClientSideAuthentication authMethod : authMethods) {
                 if (authMethod.getAuthMethod().equals(authMethodString)) {
                     AuthenticateMessage reply =
-                        authMethod.handleChallenge(challenge, stateController.clientConfig().objectMapper());
+                        authMethod.handleChallenge(challenge, stateController.clientConfig().gson());
                     if (reply == null) {
                         handleProtocolError();
                     } else {

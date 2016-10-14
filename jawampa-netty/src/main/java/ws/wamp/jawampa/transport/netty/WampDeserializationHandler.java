@@ -16,8 +16,10 @@
 
 package ws.wamp.jawampa.transport.netty;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.stream.JsonReader;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
@@ -29,6 +31,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import ws.wamp.jawampa.WampMessages.WampMessage;
 import ws.wamp.jawampa.WampSerialization;
 
+import java.io.InputStreamReader;
 import java.util.List;
 
 public class WampDeserializationHandler extends MessageToMessageDecoder<WebSocketFrame> {
@@ -76,49 +79,40 @@ public class WampDeserializationHandler extends MessageToMessageDecoder<WebSocke
     {
         if (readState != ReadState.Reading) return;
 
-        ObjectMapper objectMapper = serialization.getObjectMapper();
+        ByteBuf content;
+        Gson gson = serialization.getGson();
         if (frame instanceof TextWebSocketFrame) {
             // Only want Text frames when text subprotocol
             if (!serialization.isText())
                 throw new IllegalStateException("Received unexpected TextFrame");
-            
-            TextWebSocketFrame textFrame = (TextWebSocketFrame) frame;
-
-            // If we receive an invalid frame on of the following functions will throw
-            // This will lead Netty to closing the connection
-            ArrayNode arr = objectMapper.readValue(
-                    new ByteBufInputStream(textFrame.content()), ArrayNode.class);
-
-            if (logger.isDebugEnabled()) {
-                logger.debug("Deserialized Wamp Message: {}", arr.toString());
-            }
-
-            WampMessage recvdMessage = WampMessage.fromObjectArray(arr);
-            out.add(recvdMessage);
+            content = frame.content();
         } else if (frame instanceof BinaryWebSocketFrame) {
             // Only want Binary frames when binary subprotocol
             if (serialization.isText())
                 throw new IllegalStateException("Received unexpected BinaryFrame");
-
-            BinaryWebSocketFrame binaryFrame = (BinaryWebSocketFrame) frame;
-
-            // If we receive an invalid frame on of the following functions will throw
-            // This will lead Netty to closing the connection
-            ArrayNode arr = objectMapper.readValue(
-                    new ByteBufInputStream(binaryFrame.content()), ArrayNode.class);
-
-            if (logger.isDebugEnabled()) {
-                logger.debug("Deserialized Wamp Message: {}", arr.toString());
-            }
-
-            WampMessage recvdMessage = WampMessage.fromObjectArray(arr);
-            out.add(recvdMessage);
+            content = frame.content();
         } else if (frame instanceof PongWebSocketFrame) {
             // System.out.println("WebSocket Client received pong");
+            return;
         } else if (frame instanceof CloseWebSocketFrame) {
             // System.out.println("WebSocket Client received closing");
             readState = ReadState.Closed;
+            return;
         }
+        else
+            throw new IllegalStateException("Received unknown Frame");
+
+        // If we receive an invalid frame on of the following functions will throw
+        // This will lead Netty to closing the connection
+        JsonReader jsonReader = gson.newJsonReader( new InputStreamReader( new ByteBufInputStream( content ) ) );
+        JsonArray arr = gson.fromJson( jsonReader, JsonArray.class );
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Deserialized Wamp Message: {}", arr.toString());
+        }
+
+        WampMessage recvdMessage = WampMessage.fromObjectArray(arr);
+        out.add(recvdMessage);
     }
     
     @Override

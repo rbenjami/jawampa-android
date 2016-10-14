@@ -16,11 +16,9 @@
 
 package ws.wamp.jawampa;
 
-import java.net.URI;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Set;
-import java.util.concurrent.Future;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import rx.Observable;
 import rx.Observable.OnSubscribe;
 import rx.Observer;
@@ -34,9 +32,12 @@ import ws.wamp.jawampa.client.StateController;
 import ws.wamp.jawampa.internal.ArgArrayBuilder;
 import ws.wamp.jawampa.internal.Promise;
 import ws.wamp.jawampa.internal.UriValidator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.concurrent.Future;
 
 /**
  * Provides the client-side functionality for WAMP.<br>
@@ -89,10 +90,10 @@ public class WampClient {
     public static class ConnectedState implements State {
         
         private final long sessionId;
-        private final ObjectNode welcomeDetails;
+        private final JsonObject welcomeDetails;
         private final EnumSet<WampRoles> routerRoles;
         
-        public ConnectedState(long sessionId, ObjectNode welcomeDetails, EnumSet<WampRoles> routerRoles) {
+        public ConnectedState( long sessionId, JsonObject welcomeDetails, EnumSet<WampRoles> routerRoles ) {
             this.sessionId = sessionId;
             this.welcomeDetails = welcomeDetails;
             this.routerRoles = routerRoles;
@@ -107,8 +108,8 @@ public class WampClient {
          * Returns the details of the welcome message that was sent from the router
          * to the client
          */
-        public ObjectNode welcomeDetails() {
-            return welcomeDetails.deepCopy();
+        public JsonObject welcomeDetails() {
+            return welcomeDetails;
         }
         
         /**
@@ -187,7 +188,7 @@ public class WampClient {
      * an error if the event could not be published.
      */
     public Observable<Long> publish(final String topic, Object... args) {
-        return publish(topic, ArgArrayBuilder.buildArgumentsArray(clientConfig.objectMapper(), args), null);
+        return publish(topic, ArgArrayBuilder.buildArgumentsArray(clientConfig.gson(), args), null);
     }
 
     /**
@@ -201,7 +202,7 @@ public class WampClient {
      */
     public Observable<Long> publish(final String topic, PubSubData event) {
         if (event != null)
-            return publish(topic, event.arguments, event.keywordArguments);
+            return publish(topic, event.getArguments(), event.getKeywordArguments());
         else
             return publish(topic, null, null);
     }
@@ -217,7 +218,7 @@ public class WampClient {
      * publication ID) and will then be completed or will be completed with
      * an error if the event could not be published.
      */
-    public Observable<Long> publish(final String topic, final ArrayNode arguments, final ObjectNode argumentsKw)
+    public Observable<Long> publish( final String topic, final JsonArray arguments, final JsonObject argumentsKw )
     {
         return publish(topic, null, arguments, argumentsKw);
     }
@@ -234,8 +235,7 @@ public class WampClient {
      * publication ID) and will then be completed or will be completed with
      * an error if the event could not be published.
      */
-    public Observable<Long> publish(final String topic, final EnumSet<PublishFlags> flags, final ArrayNode arguments,
-        final ObjectNode argumentsKw)
+    public Observable<Long> publish(final String topic, final EnumSet<PublishFlags> flags, final JsonArray arguments, final JsonObject argumentsKw)
     {
         final AsyncSubject<Long> resultSubject = AsyncSubject.create();
         
@@ -416,15 +416,15 @@ public class WampClient {
                     return null;
                 }
 
-                if (ev.arguments == null || ev.arguments.size() < 1)
+                if (ev.getArguments() == null || ev.getArguments().size() < 1)
                     throw OnErrorThrowable.from(new ApplicationError(ApplicationError.MISSING_VALUE));
 
-                JsonNode eventNode = ev.arguments.get(0);
-                if (eventNode.isNull()) return null;
+                JsonElement eventNode = ev.getArguments().get( 0 );
+                if (eventNode.isJsonNull()) return null;
 
                 T eventValue;
                 try {
-                    eventValue = clientConfig.objectMapper().convertValue(eventNode, eventClass);
+                    eventValue = clientConfig.gson().fromJson( eventNode, eventClass );
                 } catch (IllegalArgumentException e) {
                     throw OnErrorThrowable.from(new ApplicationError(ApplicationError.INVALID_VALUE_TYPE));
                 }
@@ -472,19 +472,19 @@ public class WampClient {
                 //get the complete topic name 
                 //which may not be the same as method parameter 'topic' during wildcard or prefix subscriptions 
                 String actualTopic = null;
-                if(ev.details != null && ev.details.get("topic") != null){
-                	actualTopic = ev.details.get("topic").asText();
+                if(ev.getDetails() != null && ev.getDetails().get("topic") != null){
+                	actualTopic = ev.getDetails().get("topic").getAsString();
                 }
 
-                if (ev.arguments == null || ev.arguments.size() < 1)
+                if (ev.getArguments() == null || ev.getArguments().size() < 1)
                     throw OnErrorThrowable.from(new ApplicationError(ApplicationError.MISSING_VALUE));
 
-                JsonNode eventNode = ev.arguments.get(0);
-                if (eventNode.isNull()) return null;
+                JsonElement eventNode = ev.getArguments().get(0);
+                if (eventNode.isJsonNull()) return null;
 
                 T eventValue;
                 try {
-                    eventValue = clientConfig.objectMapper().convertValue(eventNode, eventClass);
+                    eventValue = clientConfig.gson().fromJson(eventNode, eventClass);
                 } catch (IllegalArgumentException e) {
                     throw OnErrorThrowable.from(new ApplicationError(ApplicationError.INVALID_VALUE_TYPE));
                 }
@@ -578,8 +578,8 @@ public class WampClient {
      * with an error.
      */
     public Observable<Reply> call(final String procedure,
-                                  final ArrayNode arguments,
-                                  final ObjectNode argumentsKw)
+                                  final JsonArray arguments,
+                                  final JsonObject argumentsKw)
     {
     	return call(procedure, null, arguments, argumentsKw);
     }
@@ -602,8 +602,8 @@ public class WampClient {
      */
     public Observable<Reply> call(final String procedure,
                                   final EnumSet<CallFlags> flags,
-                                  final ArrayNode arguments,
-                                  final ObjectNode argumentsKw)
+                                  final JsonArray arguments,
+                                  final JsonObject argumentsKw)
     {
         final AsyncSubject<Reply> resultSubject = AsyncSubject.create();
         
@@ -649,7 +649,7 @@ public class WampClient {
     public Observable<Reply> call(final String procedure, Object... args)
     {
         // Build the arguments array and serialize the arguments
-        return call(procedure, ArgArrayBuilder.buildArgumentsArray(clientConfig.objectMapper(), args), null);
+        return call(procedure, ArgArrayBuilder.buildArgumentsArray(clientConfig.gson(), args), null);
     }
     
     /**
@@ -716,7 +716,7 @@ public class WampClient {
     public <T> Observable<T> call(final String procedure, final EnumSet<CallFlags> flags,
                                   final Class<T> returnValueClass, Object... args)
     {
-        return call(procedure, flags, ArgArrayBuilder.buildArgumentsArray(clientConfig.objectMapper(), args), null)
+        return call(procedure, flags, ArgArrayBuilder.buildArgumentsArray(clientConfig.gson(), args), null)
             .map(new Func1<Reply,T>() {
             @Override
             public T call(Reply reply) {
@@ -725,15 +725,15 @@ public class WampClient {
                     return null;
                 }
                 
-                if (reply.arguments == null || reply.arguments.size() < 1)
+                if (reply.getArguments() == null || reply.getArguments().size() < 1)
                     throw OnErrorThrowable.from(new ApplicationError(ApplicationError.MISSING_RESULT));
                     
-                JsonNode resultNode = reply.arguments.get(0);
-                if (resultNode.isNull()) return null;
+                JsonElement resultNode = reply.getArguments().get(0);
+                if (resultNode.isJsonNull()) return null;
                 
                 T result;
                 try {
-                    result = clientConfig.objectMapper().convertValue(resultNode, returnValueClass);
+                    result = clientConfig.gson().fromJson(resultNode, returnValueClass);
                 } catch (IllegalArgumentException e) {
                     // The returned exception is an aggregate one. That's not too nice :(
                     throw OnErrorThrowable.from(new ApplicationError(ApplicationError.INVALID_VALUE_TYPE));
