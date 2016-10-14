@@ -24,71 +24,59 @@ import ws.wamp.jawampa.connection.WampConnectionPromise;
 /**
  * The client is waiting for a no longer used connection to close
  */
-public class WaitingForDisconnectState implements ClientState, ICompletionCallback<Void>
-{
+public class WaitingForDisconnectState implements ClientState, ICompletionCallback<Void> {
+    
+    private final StateController stateController;
+    private int nrReconnectAttempts;
+    WampConnectionPromise<Void> closePromise = new WampConnectionPromise<Void>(this, null);
+    
+    public WaitingForDisconnectState(StateController stateController, int nrReconnectAttempts) {
+        this.stateController = stateController;
+        this.nrReconnectAttempts = nrReconnectAttempts;
+    }
+    
+    public int nrReconnectAttempts() {
+        return nrReconnectAttempts;
+    }
+    
+    @Override
+    public void onEnter(ClientState lastState) {
+        
+    }
 
-	private final StateController stateController;
-	WampConnectionPromise<Void> closePromise = new WampConnectionPromise<Void>( this, null );
-	private       int             nrReconnectAttempts;
+    @Override
+    public void onLeave(ClientState newState) {
+        
+    }
+    
+    @Override
+    public void initClose() {
+        if (nrReconnectAttempts != 0) {
+            // Cancelling a reconnect triggers a state transition
+            nrReconnectAttempts = 0;
+            stateController.setExternalState(new WampClient.DisconnectedState(null));
+        }
+    }
+    
+    /**
+     * Gets the associated promise that should be completed when the
+     * connection finally closes.
+     */
+    public WampConnectionPromise<Void> closePromise() {
+        return closePromise;
+    }
 
-	public WaitingForDisconnectState( StateController stateController, int nrReconnectAttempts )
-	{
-		this.stateController = stateController;
-		this.nrReconnectAttempts = nrReconnectAttempts;
-	}
+    @Override
+    public void onCompletion(IWampConnectionFuture<Void> future) {
+        // Is called once the disconnect from the previous transport has happened
+        if (nrReconnectAttempts == 0) {
+            DisconnectedState newState = new DisconnectedState(stateController, null);
+            stateController.setState(newState);
+        } else {
+            WaitingForReconnectState newState = new WaitingForReconnectState(stateController, nrReconnectAttempts);
+            stateController.setState(newState);
+        }
+    }
 
-	public int nrReconnectAttempts()
-	{
-		return nrReconnectAttempts;
-	}
-
-	@Override
-	public void onEnter( ClientState lastState )
-	{
-
-	}
-
-	@Override
-	public void onLeave( ClientState newState )
-	{
-
-	}
-
-	@Override
-	public void initClose()
-	{
-		if ( nrReconnectAttempts != 0 )
-		{
-			// Cancelling a reconnect triggers a state transition
-			nrReconnectAttempts = 0;
-			stateController.setExternalState( new WampClient.DisconnectedState( null ) );
-		}
-	}
-
-	/**
-	 * Gets the associated promise that should be completed when the
-	 * connection finally closes.
-	 */
-	public WampConnectionPromise<Void> closePromise()
-	{
-		return closePromise;
-	}
-
-	@Override
-	public void onCompletion( IWampConnectionFuture<Void> future )
-	{
-		// Is called once the disconnect from the previous transport has happened
-		if ( nrReconnectAttempts == 0 )
-		{
-			DisconnectedState newState = new DisconnectedState( stateController, null );
-			stateController.setState( newState );
-		}
-		else
-		{
-			WaitingForReconnectState newState = new WaitingForReconnectState( stateController, nrReconnectAttempts );
-			stateController.setState( newState );
-		}
-	}
-
-
+    
 }

@@ -16,11 +16,10 @@
 
 package ws.wamp.jawampa;
 
-public enum CallFlags
-{
-	/**
-	 * Set the disclose_me flag on the Call message to true.<br>
-	 * This will allow the remote call endpoint to access information on this client's WAMP session.
-	 */
-	DiscloseMe
+public enum CallFlags {
+    /**
+     * Set the disclose_me flag on the Call message to true.<br>
+     * This will allow the remote call endpoint to access information on this client's WAMP session.
+     */
+    DiscloseMe
 }

@@ -21,21 +21,16 @@ import ws.wamp.jawampa.WampSerialization;
 /**
  * An event that signals that a connection was successfully established
  */
-class ConnectionEstablishedEvent
-{
-
-	WampSerialization serialization;
-
-	public ConnectionEstablishedEvent( WampSerialization serialization )
-	{
-		this.serialization = serialization;
-	}
-
-	/**
-	 * Returns the serialization that the client and server agreed upon
-	 */
-	public WampSerialization serialization()
-	{
-		return this.serialization;
-	}
+class ConnectionEstablishedEvent {
+    
+    WampSerialization serialization;
+    
+    public ConnectionEstablishedEvent(WampSerialization serialization) {
+        this.serialization = serialization;
+    }
+    
+    /** Returns the serialization that the client and server agreed upon */
+    public WampSerialization serialization() {
+        return this.serialization;
+    }
 }

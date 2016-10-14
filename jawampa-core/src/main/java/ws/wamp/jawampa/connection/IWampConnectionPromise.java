@@ -1,56 +1,48 @@
 package ws.wamp.jawampa.connection;
 
-public interface IWampConnectionPromise<T> extends IWampConnectionFuture<T>
-{
+public interface IWampConnectionPromise<T> extends IWampConnectionFuture<T> {
 
-	/**
-	 * A default implementation of the promise whose instance methods do nothing.<br>
-	 * Can be used in cases where the caller is not interested in the call results.
-	 */
-	public static final IWampConnectionPromise<Void> Empty = new IWampConnectionPromise<Void>()
-	{
-		@Override
-		public Void result()
-		{
-			return null;
-		}
+    void fulfill(T value);
 
-		@Override
-		public Object state()
-		{
-			return null;
-		}
+    void reject(Throwable error);
 
-		@Override
-		public void fulfill( Void value )
-		{
+    boolean isSuccess();
 
-		}
+    Throwable error();
+    
+    /**
+     * A default implementation of the promise whose instance methods do nothing.<br>
+     * Can be used in cases where the caller is not interested in the call results.
+     */
+    public static final IWampConnectionPromise<Void> Empty = new IWampConnectionPromise<Void>() {
+        @Override
+        public Void result() {
+            return null;
+        }
 
-		@Override
-		public void reject( Throwable error )
-		{
+        @Override
+        public Object state() {
+            return null;
+        }
 
-		}
+        @Override
+        public void fulfill(Void value) {
+            
+        }
 
-		@Override
-		public boolean isSuccess()
-		{
-			return false;
-		}
+        @Override
+        public void reject(Throwable error) {
+            
+        }
 
-		@Override
-		public Throwable error()
-		{
-			return null;
-		}
-	};
+        @Override
+        public boolean isSuccess() {
+            return false;
+        }
 
-	void fulfill( T value );
-
-	void reject( Throwable error );
-
-	boolean isSuccess();
-
-	Throwable error();
+        @Override
+        public Throwable error() {
+            return null;
+        }
+    };
 }
