@@ -16,9 +16,10 @@
 
 package ws.wamp.jawampa;
 
-public enum RegisterFlags {
-    /**
-     * the registered procedure is called with the caller's sessionID as part of the call details object.
-     */
-    DiscloseCaller;
+public enum RegisterFlags
+{
+	/**
+	 * the registered procedure is called with the caller's sessionID as part of the call details object.
+	 */
+	DiscloseCaller;
 }

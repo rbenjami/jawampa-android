@@ -21,73 +21,87 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class Promise<V> {
-    
-    V value;
-    boolean done = false;
-    ExecutionException error;
-    final Object mutex = new Object();
+public class Promise<V>
+{
 
-    public void resolve(V value) {
-        synchronized (mutex) {
-            if (done)
-                throw new RuntimeException("Promise resolved multiple times!");
-            this.value = value;
-            this.done = true;
-            mutex.notifyAll();
-        }
-    }
-    
-    public void resolveWithError(ExecutionException e) {
-        synchronized (mutex) {
-            if (done)
-                throw new RuntimeException("Promise resolved multiple times!");
-            this.error = e;
-            this.done = true;
-            mutex.notifyAll();
-        }
-    }
-    
-    public java.util.concurrent.Future<V> getFuture() {
-        return new Future<V>() {
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
-                return false;
-            }
+	final Object mutex = new Object();
+	V value;
+	boolean done = false;
+	ExecutionException error;
 
-            @Override
-            public boolean isCancelled() {
-                return false;
-            }
+	public void resolve( V value )
+	{
+		synchronized ( mutex )
+		{
+			if ( done )
+				throw new RuntimeException( "Promise resolved multiple times!" );
+			this.value = value;
+			this.done = true;
+			mutex.notifyAll();
+		}
+	}
 
-            @Override
-            public boolean isDone() {
-                synchronized (mutex) {
-                    return done;
-                }
-            }
+	public void resolveWithError( ExecutionException e )
+	{
+		synchronized ( mutex )
+		{
+			if ( done )
+				throw new RuntimeException( "Promise resolved multiple times!" );
+			this.error = e;
+			this.done = true;
+			mutex.notifyAll();
+		}
+	}
 
-            @Override
-            public V get() throws InterruptedException, ExecutionException {
-                synchronized (mutex) {
-                    while (!done) mutex.wait();
-                    if (error != null) throw error;
-                    return value;
-                }
-            }
+	public java.util.concurrent.Future<V> getFuture()
+	{
+		return new Future<V>()
+		{
+			@Override
+			public boolean cancel( boolean mayInterruptIfRunning )
+			{
+				return false;
+			}
 
-            @Override
-            public V get(long timeout, TimeUnit unit)
-                    throws InterruptedException, ExecutionException,
-                    TimeoutException
-            {
-                synchronized (mutex) {
-                    while (!done) unit.timedWait(mutex, timeout);
-                    if (error != null) throw error;
-                    return value;
-                }
-            }
-        };
-    }
+			@Override
+			public boolean isCancelled()
+			{
+				return false;
+			}
+
+			@Override
+			public boolean isDone()
+			{
+				synchronized ( mutex )
+				{
+					return done;
+				}
+			}
+
+			@Override
+			public V get() throws InterruptedException, ExecutionException
+			{
+				synchronized ( mutex )
+				{
+					while ( !done ) mutex.wait();
+					if ( error != null ) throw error;
+					return value;
+				}
+			}
+
+			@Override
+			public V get( long timeout, TimeUnit unit )
+					throws InterruptedException, ExecutionException,
+					TimeoutException
+			{
+				synchronized ( mutex )
+				{
+					while ( !done ) unit.timedWait( mutex, timeout );
+					if ( error != null ) throw error;
+					return value;
+				}
+			}
+		};
+	}
 
 }

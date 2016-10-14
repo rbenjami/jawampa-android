@@ -19,6 +19,7 @@ package ws.wamp.jawampa.connection;
 /**
  * Contains configuration options for client connections.
  */
-public interface IWampClientConnectionConfig {
-    
+public interface IWampClientConnectionConfig
+{
+
 }

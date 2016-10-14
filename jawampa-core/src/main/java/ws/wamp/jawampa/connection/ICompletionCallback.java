@@ -16,7 +16,8 @@
 
 package ws.wamp.jawampa.connection;
 
-public interface ICompletionCallback<T> {
-    
-    void onCompletion(IWampConnectionFuture<T> future);
+public interface ICompletionCallback<T>
+{
+
+	void onCompletion( IWampConnectionFuture<T> future );
 }

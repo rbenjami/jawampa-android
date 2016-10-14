@@ -22,17 +22,23 @@ package ws.wamp.jawampa.connection;
  * It also guarantees that after a close() call no more messages from the connection will
  * be forwarded.
  */
-public interface IConnectionController extends IWampConnection, IWampConnectionListener {
-    /** Returns the wrapped connection object */
-    IWampConnection connection();
-    
-    /**
-     * Sets the underlying connection.<br>
-     * This <b>must</b> be called before any message is pushed into the listener!
-     * @param connection The connection to use
-     */
-    void setConnection(IWampConnection connection);
-    
-    /** Returns the wrapped connection listener object */
-    IWampConnectionListener connectionListener();
+public interface IConnectionController extends IWampConnection, IWampConnectionListener
+{
+	/**
+	 * Returns the wrapped connection object
+	 */
+	IWampConnection connection();
+
+	/**
+	 * Sets the underlying connection.<br>
+	 * This <b>must</b> be called before any message is pushed into the listener!
+	 *
+	 * @param connection The connection to use
+	 */
+	void setConnection( IWampConnection connection );
+
+	/**
+	 * Returns the wrapped connection listener object
+	 */
+	IWampConnectionListener connectionListener();
 }

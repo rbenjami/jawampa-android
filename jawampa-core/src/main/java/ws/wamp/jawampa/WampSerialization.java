@@ -25,70 +25,87 @@ import java.util.List;
 /**
  * Possible serialization methods for WAMP
  */
-public enum WampSerialization {
-    /** Used for cases where the serialization could not be negotiated */
-    Invalid("", true, null),
-    /** Use the JSON serialization */
-    Json("wamp.2.json", true, new Gson());
-    /** Use the MessagePack serialization */
+public enum WampSerialization
+{
+	/**
+	 * Used for cases where the serialization could not be negotiated
+	 */
+	Invalid( "", true, null ),
+	/**
+	 * Use the JSON serialization
+	 */
+	Json( "wamp.2.json", true, new Gson() );
+	private final static List<WampSerialization> defaultSerializationList;
+
+	static
+	{
+		List<WampSerialization> l = new ArrayList<WampSerialization>();
+		addDefaultSerializations( l );
+		defaultSerializationList = Collections.unmodifiableList( l );
+	}
+
+	/**
+	 * Use the MessagePack serialization
+	 */
 //    MessagePack("wamp.2.msgpack", false, new ObjectMapper(new MessagePackFactory()));
 
-    private final String stringValue;
-    private final boolean isText;
-    private final Gson gson;
+	private final String  stringValue;
+	private final boolean isText;
+	private final Gson    gson;
 
-    WampSerialization(String stringValue, boolean isText, Gson gson) {
-        this.stringValue = stringValue;
-        this.isText = isText;
-        this.gson = gson;
-    }
+	WampSerialization( String stringValue, boolean isText, Gson gson )
+	{
+		this.stringValue = stringValue;
+		this.isText = isText;
+		this.gson = gson;
+	}
 
-    public boolean isText() {
-        return isText;
-    }
-
-    public Gson getGson()
-    {
-        return gson;
-    }
-
-    @Override
-    public String toString() {
-        return stringValue;
-    }
-
-    public static WampSerialization fromString(String serialization) {
-        if (serialization == null) return Invalid;
-        else if (serialization.equals("wamp.2.json")) return Json;
+	public static WampSerialization fromString( String serialization )
+	{
+		if ( serialization == null ) return Invalid;
+		else if ( serialization.equals( "wamp.2.json" ) ) return Json;
 //        else if (serialization.equals("wamp.2.msgpack")) return MessagePack;
-        return Invalid;
-    }
-    
-    public static String makeWebsocketSubprotocolList(List<WampSerialization> serializations) {
-        StringBuilder subProtocolBuilder = new StringBuilder();
-        boolean first = true;
-        for (WampSerialization serialization : serializations) {
-            if (!first) subProtocolBuilder.append(',');
-            first = false;
-            subProtocolBuilder.append(serialization.toString());
-        }
+		return Invalid;
+	}
 
-        return subProtocolBuilder.toString();
-    }
+	public static String makeWebsocketSubprotocolList( List<WampSerialization> serializations )
+	{
+		StringBuilder subProtocolBuilder = new StringBuilder();
+		boolean first = true;
+		for ( WampSerialization serialization : serializations )
+		{
+			if ( !first ) subProtocolBuilder.append( ',' );
+			first = false;
+			subProtocolBuilder.append( serialization.toString() );
+		}
 
-    public static void addDefaultSerializations(List<WampSerialization> serializations) {
-        serializations.add(Json);
+		return subProtocolBuilder.toString();
+	}
+
+	public static void addDefaultSerializations( List<WampSerialization> serializations )
+	{
+		serializations.add( Json );
 //        serializations.add(MessagePack);
-    }
-    
-    private final static List<WampSerialization> defaultSerializationList;
-    static {
-        List<WampSerialization> l = new ArrayList<WampSerialization>();
-        addDefaultSerializations(l);
-        defaultSerializationList = Collections.unmodifiableList(l);
-    }
-    
-    public static List<WampSerialization> defaultSerializations() {
-         return defaultSerializationList;
-    }
+	}
+
+	public static List<WampSerialization> defaultSerializations()
+	{
+		return defaultSerializationList;
+	}
+
+	public boolean isText()
+	{
+		return isText;
+	}
+
+	public Gson getGson()
+	{
+		return gson;
+	}
+
+	@Override
+	public String toString()
+	{
+		return stringValue;
+	}
 }

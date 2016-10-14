@@ -34,50 +34,62 @@ import ws.wamp.jawampa.WampSerialization;
 import java.io.OutputStreamWriter;
 import java.util.List;
 
-public class WampSerializationHandler extends MessageToMessageEncoder<WampMessage> {
-    
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(WampSerializationHandler.class);
+public class WampSerializationHandler extends MessageToMessageEncoder<WampMessage>
+{
 
-    final WampSerialization serialization;
-    
-    public WampSerialization serialization() {
-        return serialization;
-    }
-    
-    public WampSerializationHandler(WampSerialization serialization) {
-        this.serialization = serialization;
-    }
-    
-    @Override
-    public void handlerAdded(ChannelHandlerContext ctx) {
-    }
+	private static final InternalLogger logger = InternalLoggerFactory.getInstance( WampSerializationHandler.class );
 
-    @Override
-    protected void encode(ChannelHandlerContext ctx, WampMessage msg, List<Object> out) throws Exception {
-        ByteBuf msgBuffer = Unpooled.buffer();
-        ByteBufOutputStream outStream = new ByteBufOutputStream(msgBuffer);
-        Gson gson = serialization.getGson();
-        try {
-            JsonWriter writer = new JsonWriter(new OutputStreamWriter(outStream, "UTF-8"));
-            JsonArray node = msg.toObjectArray();
+	final WampSerialization serialization;
 
-            gson.toJson( node, writer );
+	public WampSerializationHandler( WampSerialization serialization )
+	{
+		this.serialization = serialization;
+	}
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Serialized Wamp Message: {}", node.toString());
-            }
+	public WampSerialization serialization()
+	{
+		return serialization;
+	}
 
-        } catch (Exception e) {
-            msgBuffer.release();
-            return;
-        }
+	@Override
+	public void handlerAdded( ChannelHandlerContext ctx )
+	{
+	}
 
-        if (serialization.isText()) {
-            TextWebSocketFrame frame = new TextWebSocketFrame(msgBuffer);
-            out.add(frame);
-        } else {
-            BinaryWebSocketFrame frame = new BinaryWebSocketFrame(msgBuffer);
-            out.add(frame);
-        }
-    }
+	@Override
+	protected void encode( ChannelHandlerContext ctx, WampMessage msg, List<Object> out ) throws Exception
+	{
+		ByteBuf msgBuffer = Unpooled.buffer();
+		ByteBufOutputStream outStream = new ByteBufOutputStream( msgBuffer );
+		Gson gson = serialization.getGson();
+		try
+		{
+			JsonWriter writer = new JsonWriter( new OutputStreamWriter( outStream, "UTF-8" ) );
+			JsonArray node = msg.toObjectArray();
+
+			gson.toJson( node, writer );
+
+			if ( logger.isDebugEnabled() )
+			{
+				logger.debug( "Serialized Wamp Message: {}", node.toString() );
+			}
+
+		}
+		catch ( Exception e )
+		{
+			msgBuffer.release();
+			return;
+		}
+
+		if ( serialization.isText() )
+		{
+			TextWebSocketFrame frame = new TextWebSocketFrame( msgBuffer );
+			out.add( frame );
+		}
+		else
+		{
+			BinaryWebSocketFrame frame = new BinaryWebSocketFrame( msgBuffer );
+			out.add( frame );
+		}
+	}
 }

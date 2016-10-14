@@ -37,136 +37,151 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  */
 public class Request
 {
-    final StateController         stateController;
-    final SessionEstablishedState session;
-    final long                    requestId;
-    final JsonArray               arguments;
-    final JsonObject              keywordArguments;
-    final JsonObject              details;
-    
-    volatile int replySent = 0;
-    
-    private static final AtomicIntegerFieldUpdater<Request> replySentUpdater;
-    static {
-        replySentUpdater = AtomicIntegerFieldUpdater.newUpdater(Request.class, "replySent");
-    }
+	private static final AtomicIntegerFieldUpdater<Request> replySentUpdater;
 
-    public Request(StateController stateController, SessionEstablishedState session, 
-                   long requestId, JsonArray arguments, JsonObject keywordArguments, JsonObject details)
-    {
-        this.stateController = stateController;
-        this.session = session;
-        this.requestId = requestId;
-        this.arguments = arguments;
-        this.keywordArguments = keywordArguments;
-        this.details = details;
-    }
+	static
+	{
+		replySentUpdater = AtomicIntegerFieldUpdater.newUpdater( Request.class, "replySent" );
+	}
 
-    public JsonArray getArguments()
-    {
-        return arguments;
-    }
+	final StateController         stateController;
+	final SessionEstablishedState session;
+	final long                    requestId;
+	final JsonArray               arguments;
+	final JsonObject              keywordArguments;
+	final JsonObject              details;
+	volatile int replySent = 0;
 
-    public JsonObject getKeywordArguments()
-    {
-        return keywordArguments;
-    }
+	public Request( StateController stateController, SessionEstablishedState session,
+					long requestId, JsonArray arguments, JsonObject keywordArguments, JsonObject details )
+	{
+		this.stateController = stateController;
+		this.session = session;
+		this.requestId = requestId;
+		this.arguments = arguments;
+		this.keywordArguments = keywordArguments;
+		this.details = details;
+	}
 
-    public JsonObject getDetails()
-    {
-        return details;
-    }
+	public JsonArray getArguments()
+	{
+		return arguments;
+	}
 
-    /**
-     * Send an error message in response to the request.<br>
-     * If this is called more than once then the following invocations will
-     * have no effect. Respones will be only sent once.
-     * @param error The ApplicationError that shoul be serialized and sent
-     * as an exceptional response. Must not be null.
-     */
-    public void replyError(ApplicationError error) throws ApplicationError{
-        if (error == null || error.uri == null) throw new NullPointerException();
-        replyError(error.uri, error.args, error.kwArgs);
-    }
-    
-    /**
-     * Send an error message in response to the request.<br>
-     * This version of the function will use Jacksons object mapping
-     * capabilities to transform the argument objects in a JSON argument
-     * array which will be sent as the positional arguments of the call.
-     * If keyword arguments are needed then this function can not be used.<br>
-     * If this is called more than once then the following invocations will
-     * have no effect. Respones will be only sent once.
-     * @param errorUri The error message that should be sent. This must be a
-     * valid WAMP Uri.
-     * @param args The positional arguments to sent in the response
-     */
-    public void replyError(String errorUri, Object... args) throws ApplicationError{
-        replyError(errorUri, ArgArrayBuilder.buildArgumentsArray(stateController.clientConfig().gson(), args), null);
-    }
-    
-    /**
-     * Send an error message in response to the request.<br>
-     * If this is called more than once then the following invocations will
-     * have no effect. Respones will be only sent once.
-     * @param errorUri The error message that should be sent. This must be a
-     * valid WAMP Uri.
-     * @param arguments The positional arguments to sent in the response
-     * @param keywordArguments The keyword arguments to sent in the response
-     */
-    public void replyError(String errorUri, JsonArray arguments, JsonObject keywordArguments) throws ApplicationError {
-        int replyWasSent = replySentUpdater.getAndSet(this, 1);
-        if (replyWasSent == 1) return;
-        
-        UriValidator.validate(errorUri, false);
-        
-        final ErrorMessage msg = new ErrorMessage(WampMessages.InvocationMessage.ID, 
-                                                  requestId, null, errorUri,
-                                                  arguments, keywordArguments);
-         
-        stateController.tryScheduleAction(new Runnable() {
-            @Override
-            public void run() {
-                if (stateController.currentState() != session) return;
-                session.connectionController().sendMessage(msg, IWampConnectionPromise.Empty);
-            }
-        });
-    }
-    
-    /**
-     * Send a normal response to the request.<br>
-     * If this is called more than once then the following invocations will
-     * have no effect. Responses will be only sent once.
-     * @param arguments The positional arguments to sent in the response
-     * @param keywordArguments The keyword arguments to sent in the response
-     */
-    public void reply(JsonArray arguments, JsonObject keywordArguments) {
-        int replyWasSent = replySentUpdater.getAndSet(this, 1);
-        if (replyWasSent == 1) return;
-        
-        final YieldMessage msg = new YieldMessage(requestId, null,
-                                                  arguments, keywordArguments);
-         
-        stateController.tryScheduleAction(new Runnable() {
-            @Override
-            public void run() {
-                if (stateController.currentState() != session) return;
-                session.connectionController().sendMessage(msg, IWampConnectionPromise.Empty);
-            }
-        });
-    }
-    
-    /**
-     * Send a normal response to the request.<br>
-     * This version of the function will use Jacksons object mapping
-     * capabilities to transform the argument objects in a JSON argument
-     * array which will be sent as the positional arguments of the call.
-     * If keyword arguments are needed then this function can not be used.<br>
-     * If this is called more than once then the following invocations will
-     * have no effect. Respones will be only sent once.
-     * @param args The positional arguments to sent in the response
-     */
-    public void reply(Object... args) {
-        reply(ArgArrayBuilder.buildArgumentsArray(stateController.clientConfig().gson(), args), null);
-    }
+	public JsonObject getKeywordArguments()
+	{
+		return keywordArguments;
+	}
+
+	public JsonObject getDetails()
+	{
+		return details;
+	}
+
+	/**
+	 * Send an error message in response to the request.<br>
+	 * If this is called more than once then the following invocations will
+	 * have no effect. Respones will be only sent once.
+	 *
+	 * @param error The ApplicationError that shoul be serialized and sent
+	 *              as an exceptional response. Must not be null.
+	 */
+	public void replyError( ApplicationError error ) throws ApplicationError
+	{
+		if ( error == null || error.uri == null ) throw new NullPointerException();
+		replyError( error.uri, error.args, error.kwArgs );
+	}
+
+	/**
+	 * Send an error message in response to the request.<br>
+	 * This version of the function will use Jacksons object mapping
+	 * capabilities to transform the argument objects in a JSON argument
+	 * array which will be sent as the positional arguments of the call.
+	 * If keyword arguments are needed then this function can not be used.<br>
+	 * If this is called more than once then the following invocations will
+	 * have no effect. Respones will be only sent once.
+	 *
+	 * @param errorUri The error message that should be sent. This must be a
+	 *                 valid WAMP Uri.
+	 * @param args     The positional arguments to sent in the response
+	 */
+	public void replyError( String errorUri, Object... args ) throws ApplicationError
+	{
+		replyError( errorUri, ArgArrayBuilder.buildArgumentsArray( stateController.clientConfig().gson(), args ), null );
+	}
+
+	/**
+	 * Send an error message in response to the request.<br>
+	 * If this is called more than once then the following invocations will
+	 * have no effect. Respones will be only sent once.
+	 *
+	 * @param errorUri         The error message that should be sent. This must be a
+	 *                         valid WAMP Uri.
+	 * @param arguments        The positional arguments to sent in the response
+	 * @param keywordArguments The keyword arguments to sent in the response
+	 */
+	public void replyError( String errorUri, JsonArray arguments, JsonObject keywordArguments ) throws ApplicationError
+	{
+		int replyWasSent = replySentUpdater.getAndSet( this, 1 );
+		if ( replyWasSent == 1 ) return;
+
+		UriValidator.validate( errorUri, false );
+
+		final ErrorMessage msg = new ErrorMessage( WampMessages.InvocationMessage.ID,
+				requestId, null, errorUri,
+				arguments, keywordArguments );
+
+		stateController.tryScheduleAction( new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				if ( stateController.currentState() != session ) return;
+				session.connectionController().sendMessage( msg, IWampConnectionPromise.Empty );
+			}
+		} );
+	}
+
+	/**
+	 * Send a normal response to the request.<br>
+	 * If this is called more than once then the following invocations will
+	 * have no effect. Responses will be only sent once.
+	 *
+	 * @param arguments        The positional arguments to sent in the response
+	 * @param keywordArguments The keyword arguments to sent in the response
+	 */
+	public void reply( JsonArray arguments, JsonObject keywordArguments )
+	{
+		int replyWasSent = replySentUpdater.getAndSet( this, 1 );
+		if ( replyWasSent == 1 ) return;
+
+		final YieldMessage msg = new YieldMessage( requestId, null,
+				arguments, keywordArguments );
+
+		stateController.tryScheduleAction( new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				if ( stateController.currentState() != session ) return;
+				session.connectionController().sendMessage( msg, IWampConnectionPromise.Empty );
+			}
+		} );
+	}
+
+	/**
+	 * Send a normal response to the request.<br>
+	 * This version of the function will use Jacksons object mapping
+	 * capabilities to transform the argument objects in a JSON argument
+	 * array which will be sent as the positional arguments of the call.
+	 * If keyword arguments are needed then this function can not be used.<br>
+	 * If this is called more than once then the following invocations will
+	 * have no effect. Respones will be only sent once.
+	 *
+	 * @param args The positional arguments to sent in the response
+	 */
+	public void reply( Object... args )
+	{
+		reply( ArgArrayBuilder.buildArgumentsArray( stateController.clientConfig().gson(), args ), null );
+	}
 }

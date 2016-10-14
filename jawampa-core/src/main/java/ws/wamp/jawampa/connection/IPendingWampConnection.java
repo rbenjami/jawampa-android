@@ -20,20 +20,25 @@ package ws.wamp.jawampa.connection;
  * A connection which is currently trying to connect to the remote peer,
  * but which has not yet successfully finished to connect.
  */
-public interface IPendingWampConnection {
-    
-    /**
-     *  Cancels the connect attempt<br>
-     *  The implementation must guarantee that upon successful cancellation
-     *  {@link IPendingWampConnectionListener#connectFailed(Throwable)} is called
-     *  to acknowledge the cancellation.
-     */
-    void cancelConnect();
-    
-    /** An dummy instance of IPendingWampConnection that supports no cancellation */
-    public static final IPendingWampConnection Dummy = new IPendingWampConnection() {
-        @Override
-        public void cancelConnect() {
-        }
-    };
+public interface IPendingWampConnection
+{
+
+	/**
+	 * An dummy instance of IPendingWampConnection that supports no cancellation
+	 */
+	public static final IPendingWampConnection Dummy = new IPendingWampConnection()
+	{
+		@Override
+		public void cancelConnect()
+		{
+		}
+	};
+
+	/**
+	 * Cancels the connect attempt<br>
+	 * The implementation must guarantee that upon successful cancellation
+	 * {@link IPendingWampConnectionListener#connectFailed(Throwable)} is called
+	 * to acknowledge the cancellation.
+	 */
+	void cancelConnect();
 }

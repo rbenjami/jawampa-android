@@ -34,93 +34,107 @@ import ws.wamp.jawampa.WampSerialization;
 import java.io.InputStreamReader;
 import java.util.List;
 
-public class WampDeserializationHandler extends MessageToMessageDecoder<WebSocketFrame> {
-    
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(WampDeserializationHandler.class);
-    
-    enum ReadState {
-        Closed,
-        Reading,
-        Error
-    }
-    
-    ReadState readState = ReadState.Closed;
+public class WampDeserializationHandler extends MessageToMessageDecoder<WebSocketFrame>
+{
 
-    final WampSerialization serialization;
-    
-    public WampSerialization serialization() {
-        return serialization;
-    }
-    
-    public WampDeserializationHandler(WampSerialization serialization) {
-        this.serialization = serialization;
-    }
-    
-    @Override
-    public void handlerAdded(ChannelHandlerContext ctx) {
-        readState = ReadState.Reading;
-    }
-    
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) {
-        readState = ReadState.Reading;
-        ctx.fireChannelActive();
-    }
-    
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
-        readState = ReadState.Closed;
-        ctx.fireChannelInactive();
-    }
+	private static final InternalLogger logger = InternalLoggerFactory.getInstance( WampDeserializationHandler.class );
+	final WampSerialization serialization;
+	ReadState readState = ReadState.Closed;
 
-    @Override
-    protected void decode(ChannelHandlerContext ctx, WebSocketFrame frame, List<Object> out) 
-        throws Exception 
-    {
-        if (readState != ReadState.Reading) return;
+	public WampDeserializationHandler( WampSerialization serialization )
+	{
+		this.serialization = serialization;
+	}
 
-        ByteBuf content;
-        Gson gson = serialization.getGson();
-        if (frame instanceof TextWebSocketFrame) {
-            // Only want Text frames when text subprotocol
-            if (!serialization.isText())
-                throw new IllegalStateException("Received unexpected TextFrame");
-            content = frame.content();
-        } else if (frame instanceof BinaryWebSocketFrame) {
-            // Only want Binary frames when binary subprotocol
-            if (serialization.isText())
-                throw new IllegalStateException("Received unexpected BinaryFrame");
-            content = frame.content();
-        } else if (frame instanceof PongWebSocketFrame) {
-            // System.out.println("WebSocket Client received pong");
-            return;
-        } else if (frame instanceof CloseWebSocketFrame) {
-            // System.out.println("WebSocket Client received closing");
-            readState = ReadState.Closed;
-            return;
-        }
-        else
-            throw new IllegalStateException("Received unknown Frame");
+	public WampSerialization serialization()
+	{
+		return serialization;
+	}
 
-        // If we receive an invalid frame on of the following functions will throw
-        // This will lead Netty to closing the connection
-        JsonReader jsonReader = gson.newJsonReader( new InputStreamReader( new ByteBufInputStream( content ) ) );
-        JsonArray arr = gson.fromJson( jsonReader, JsonArray.class );
+	@Override
+	public void handlerAdded( ChannelHandlerContext ctx )
+	{
+		readState = ReadState.Reading;
+	}
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Deserialized Wamp Message: {}", arr.toString());
-        }
+	@Override
+	public void channelActive( ChannelHandlerContext ctx )
+	{
+		readState = ReadState.Reading;
+		ctx.fireChannelActive();
+	}
 
-        WampMessage recvdMessage = WampMessage.fromObjectArray(arr);
-        out.add(recvdMessage);
-    }
-    
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        // We caught an exception.
-        // Most probably because we received an invalid message
-        readState = ReadState.Error;
-        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-           .addListener(ChannelFutureListener.CLOSE);
-    }
+	@Override
+	public void channelInactive( ChannelHandlerContext ctx )
+	{
+		readState = ReadState.Closed;
+		ctx.fireChannelInactive();
+	}
+
+	@Override
+	protected void decode( ChannelHandlerContext ctx, WebSocketFrame frame, List<Object> out )
+			throws Exception
+	{
+		if ( readState != ReadState.Reading ) return;
+
+		ByteBuf content;
+		Gson gson = serialization.getGson();
+		if ( frame instanceof TextWebSocketFrame )
+		{
+			// Only want Text frames when text subprotocol
+			if ( !serialization.isText() )
+				throw new IllegalStateException( "Received unexpected TextFrame" );
+			content = frame.content();
+		}
+		else if ( frame instanceof BinaryWebSocketFrame )
+		{
+			// Only want Binary frames when binary subprotocol
+			if ( serialization.isText() )
+				throw new IllegalStateException( "Received unexpected BinaryFrame" );
+			content = frame.content();
+		}
+		else if ( frame instanceof PongWebSocketFrame )
+		{
+			// System.out.println("WebSocket Client received pong");
+			return;
+		}
+		else if ( frame instanceof CloseWebSocketFrame )
+		{
+			// System.out.println("WebSocket Client received closing");
+			readState = ReadState.Closed;
+			return;
+		}
+		else
+			throw new IllegalStateException( "Received unknown Frame" );
+
+		// If we receive an invalid frame on of the following functions will throw
+		// This will lead Netty to closing the connection
+		JsonReader jsonReader = gson.newJsonReader( new InputStreamReader( new ByteBufInputStream( content ) ) );
+		JsonArray arr = gson.fromJson( jsonReader, JsonArray.class );
+
+		if ( logger.isDebugEnabled() )
+		{
+			logger.debug( "Deserialized Wamp Message: {}", arr.toString() );
+		}
+
+		WampMessage recvdMessage = WampMessage.fromObjectArray( arr );
+		out.add( recvdMessage );
+	}
+
+	@Override
+	public void exceptionCaught( ChannelHandlerContext ctx, Throwable cause )
+	{
+		// We caught an exception.
+		// Most probably because we received an invalid message
+		readState = ReadState.Error;
+		ctx.writeAndFlush( Unpooled.EMPTY_BUFFER )
+		   .addListener( ChannelFutureListener.CLOSE );
+	}
+
+	enum ReadState
+	{
+		Closed,
+		Reading,
+		Error
+	}
 }

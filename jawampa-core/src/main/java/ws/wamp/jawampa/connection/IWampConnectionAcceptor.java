@@ -27,18 +27,21 @@ package ws.wamp.jawampa.connection;
  * at the acceptor.
  * </ul>
  */
-public interface IWampConnectionAcceptor {
-    
-    /** Creates a listener for a new incoming connection */
-    IWampConnectionListener createNewConnectionListener();
-    
-    /**
-     * Requests the acceptor to accept the new incoming connection.<br>
-     * This <b>must</b> be called before any method is called on the {@link IWampConnectionListener}
-     * 
-     * @param newConnection The connection that is accepted
-     * @param connectionListener The listener for the accepted connection.<br>
-     * This must match the listener that was retrieved with {@link IWampConnectionAcceptor#createNewConnectionListener()} 
-     */
-    void acceptNewConnection(IWampConnection newConnection, IWampConnectionListener connectionListener);
+public interface IWampConnectionAcceptor
+{
+
+	/**
+	 * Creates a listener for a new incoming connection
+	 */
+	IWampConnectionListener createNewConnectionListener();
+
+	/**
+	 * Requests the acceptor to accept the new incoming connection.<br>
+	 * This <b>must</b> be called before any method is called on the {@link IWampConnectionListener}
+	 *
+	 * @param newConnection      The connection that is accepted
+	 * @param connectionListener The listener for the accepted connection.<br>
+	 *                           This must match the listener that was retrieved with {@link IWampConnectionAcceptor#createNewConnectionListener()}
+	 */
+	void acceptNewConnection( IWampConnection newConnection, IWampConnectionListener connectionListener );
 }

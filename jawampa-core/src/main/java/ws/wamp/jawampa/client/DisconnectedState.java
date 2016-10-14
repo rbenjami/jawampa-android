@@ -16,29 +16,36 @@
 
 package ws.wamp.jawampa.client;
 
-/** The session is not connected */
-public class DisconnectedState implements ClientState {
-    private final StateController stateController;
-    final Throwable disconnectReason;
-    
-    public DisconnectedState(StateController stateController, Throwable closeReason) {
-        this.stateController = stateController;
-        this.disconnectReason = closeReason;
-    }
+/**
+ * The session is not connected
+ */
+public class DisconnectedState implements ClientState
+{
+	final         Throwable       disconnectReason;
+	private final StateController stateController;
 
-    @Override
-    public void onEnter(ClientState lastState) {
-        stateController.performShutdown();
-    }
+	public DisconnectedState( StateController stateController, Throwable closeReason )
+	{
+		this.stateController = stateController;
+		this.disconnectReason = closeReason;
+	}
 
-    @Override
-    public void onLeave(ClientState newState) {
-        // Will never happen
-    }
-    
-    @Override
-    public void initClose() {
-        // We are already disconnected
-        // There's nothing left to do
-    }
+	@Override
+	public void onEnter( ClientState lastState )
+	{
+		stateController.performShutdown();
+	}
+
+	@Override
+	public void onLeave( ClientState newState )
+	{
+		// Will never happen
+	}
+
+	@Override
+	public void initClose()
+	{
+		// We are already disconnected
+		// There's nothing left to do
+	}
 }
