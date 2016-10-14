@@ -1,4 +1,9 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+group = 'ws.wamp.jawampa.android'
+version = '1.0.0'
 
 android {
 	compileSdkVersion 24
@@ -26,11 +31,40 @@ dependencies {
 	androidTestCompile( 'com.android.support.test.espresso:espresso-core:2.2.2', {
 		exclude group: 'com.android.support', module: 'support-annotations'
 	} )
-	compile 'com.android.support:appcompat-v7:24.2.1'
 	testCompile 'junit:junit:4.12'
 	compile project( path: ':jawampa-core' )
 
 	compile 'io.netty:netty-transport:4.0.24.Final'
 	compile 'io.netty:netty-handler:4.0.24.Final'
 	compile 'io.netty:netty-codec-http:4.0.24.Final'
+}
+
+install {
+	repositories.mavenInstaller {
+		pom.project {
+			groupId 'ws.wamp.jawampa.android'
+			artifactId 'jawampa-netty'
+			version '1.0.0'
+		}
+	}
+}
+
+bintray {
+	user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+	key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+	// jFrog plugin must be declared for this line to work
+	configurations = ['archives']
+	// Package info for BinTray
+	pkg {
+		repo = 'maven'
+		name = 'jawampa'
+		userOrg = user
+		licenses = ['Apache-2.0']
+		vcsUrl = 'https://github.com/bintray/gradle-bintray-plugin.git'
+		version {
+			name = '0.1'
+			desc = 'Gradle Bintray Plugin 1.0 final'
+			vcsTag = '0.1'
+		}
+	}
 }
