@@ -16,17 +16,15 @@
 
 package ws.wamp.jawampa.internal;
 
-public class Version
-{
+public class  Version {
 
-	/**
-	 * Returns version string of this library.
-	 * This is used as agent in wamp protocol, to identify itself
-	 *
-	 * @return version string
-	 */
-	public static final String getVersion()
-	{
-		return "Jawampa-" + Version.class.getPackage().getImplementationVersion();
-	}
+    /**
+     * Returns version string of this library.
+     * This is used as agent in wamp protocol, to identify itself
+     *
+     * @return version string
+     */
+    public static final String getVersion() {
+        return "Jawampa-"+Version.class.getPackage().getImplementationVersion();
+    }
 }

@@ -21,25 +21,22 @@ import ws.wamp.jawampa.WampClient;
 /**
  * Base class for all internal states that the client can have
  */
-public interface ClientState
-{
-	/**
-	 * Is called when a new state is entered.
-	 *
-	 * @param lastState The last state that was entered before this state.
-	 */
-	void onEnter( ClientState lastState );
-
-	/**
-	 * Is called when the a state is leaved.
-	 *
-	 * @param newState The new state that will be entered
-	 */
-	void onLeave( ClientState newState );
-
-	/**
-	 * Initiates the close process.<br>
-	 * Will be called on {@link WampClient#close()} of the client
-	 */
-	void initClose();
+public interface ClientState {
+    /**
+     * Is called when a new state is entered.
+     * @param lastState The last state that was entered before this state.
+     */
+    void onEnter(ClientState lastState);
+    
+    /**
+     * Is called when the a state is leaved.
+     * @param newState The new state that will be entered
+     */
+    void onLeave(ClientState newState);
+    
+    /**
+     * Initiates the close process.<br>
+     * Will be called on {@link WampClient#close()} of the client
+     */
+    void initClose();
 }

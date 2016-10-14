@@ -23,20 +23,13 @@ import ws.wamp.jawampa.WampMessages.WampMessage;
  * The connection will notify the connection user (e.g. the Client or Router)
  * about connection events through this interface.
  */
-public interface IWampConnectionListener
-{
-	/**
-	 * Signals that the connection got closed gracefully
-	 */
-	void transportClosed();
-
-	/**
-	 * Signals that the connection encountered an error and got closed
-	 */
-	void transportError( Throwable cause );
-
-	/**
-	 * A message is received from the WAMP connection
-	 */
-	void messageReceived( WampMessage message );
+public interface IWampConnectionListener {
+    /** Signals that the connection got closed gracefully */
+    void transportClosed();
+    
+    /** Signals that the connection encountered an error and got closed */
+    void transportError(Throwable cause);
+    
+    /** A message is received from the WAMP connection */
+    void messageReceived(WampMessage message);
 }

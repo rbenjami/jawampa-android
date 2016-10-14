@@ -16,57 +16,50 @@
 
 package ws.wamp.jawampa.client;
 
+import java.util.concurrent.TimeUnit;
+
 import rx.Subscription;
 import rx.functions.Action0;
 import ws.wamp.jawampa.WampClient;
 
-import java.util.concurrent.TimeUnit;
+public class WaitingForReconnectState implements ClientState {
+    
+    private final StateController stateController;
+    private int nrReconnectAttempts;
+    Subscription reconnectSubscription;
+    
+    public WaitingForReconnectState(StateController stateController, int nrReconnectAttempts) {
+        this.stateController = stateController;
+        this.nrReconnectAttempts = nrReconnectAttempts;
+    }
+    
+    @Override
+    public void onEnter(ClientState lastState) {
+        reconnectSubscription =
+            stateController.rxScheduler().createWorker().schedule(new Action0() {
+                @Override
+                public void call() {
+                    if (stateController.currentState() != WaitingForReconnectState.this) return;
+                    // Reconnect now
+                    ConnectingState newState = new ConnectingState(stateController, nrReconnectAttempts);
+                    stateController.setState(newState);
+                }
+            }, stateController.clientConfig().reconnectInterval(), TimeUnit.MILLISECONDS);
+    }
 
-public class WaitingForReconnectState implements ClientState
-{
+    @Override
+    public void onLeave(ClientState newState) {
+        
+    }
 
-	private final StateController stateController;
-	private       int             nrReconnectAttempts;
-	Subscription reconnectSubscription;
-
-	public WaitingForReconnectState( StateController stateController, int nrReconnectAttempts )
-	{
-		this.stateController = stateController;
-		this.nrReconnectAttempts = nrReconnectAttempts;
-	}
-
-	@Override
-	public void onEnter( ClientState lastState )
-	{
-		reconnectSubscription =
-				stateController.rxScheduler().createWorker().schedule( new Action0()
-				{
-					@Override
-					public void call()
-					{
-						if ( stateController.currentState() != WaitingForReconnectState.this ) return;
-						// Reconnect now
-						ConnectingState newState = new ConnectingState( stateController, nrReconnectAttempts );
-						stateController.setState( newState );
-					}
-				}, stateController.clientConfig().reconnectInterval(), TimeUnit.MILLISECONDS );
-	}
-
-	@Override
-	public void onLeave( ClientState newState )
-	{
-
-	}
-
-	@Override
-	public void initClose()
-	{
-		reconnectSubscription.unsubscribe();
-		// Current external state is Connecting
-		// Move to disconnected
-		stateController.setExternalState( new WampClient.DisconnectedState( null ) );
-		// And switch the internal state also to Disconnected
-		DisconnectedState newState = new DisconnectedState( stateController, null );
-		stateController.setState( newState );
-	}
+    @Override
+    public void initClose() {
+        reconnectSubscription.unsubscribe();
+        // Current external state is Connecting
+        // Move to disconnected
+        stateController.setExternalState(new WampClient.DisconnectedState(null));
+        // And switch the internal state also to Disconnected
+        DisconnectedState newState = new DisconnectedState(stateController, null);
+        stateController.setState(newState);
+    }
 }
