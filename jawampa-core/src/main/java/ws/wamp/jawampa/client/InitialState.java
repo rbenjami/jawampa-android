@@ -21,26 +21,31 @@ package ws.wamp.jawampa.client;
  * The client is just initialized.<br>
  * There was no attempt to connect.
  */
-public class InitialState implements ClientState {
-    private final StateController stateController;
+public class InitialState implements ClientState
+{
+	private final StateController stateController;
 
-    InitialState(StateController stateController) {
-        this.stateController = stateController;
-    }
+	InitialState( StateController stateController )
+	{
+		this.stateController = stateController;
+	}
 
-    @Override
-    public void onEnter(ClientState lastState) {
-        
-    }
+	@Override
+	public void onEnter( ClientState lastState )
+	{
 
-    @Override
-    public void onLeave(ClientState newState) {
-        
-    }
-    
-    @Override
-    public void initClose() {
-        DisconnectedState nextState = new DisconnectedState(stateController, null);
-        stateController.setState(nextState);
-    }
+	}
+
+	@Override
+	public void onLeave( ClientState newState )
+	{
+
+	}
+
+	@Override
+	public void initClose()
+	{
+		DisconnectedState nextState = new DisconnectedState( stateController, null );
+		stateController.setState( nextState );
+	}
 }

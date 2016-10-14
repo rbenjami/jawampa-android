@@ -18,9 +18,10 @@ package ws.wamp.jawampa.connection;
 
 import java.util.concurrent.ScheduledExecutorService;
 
-public interface IWampConnector {
-    IPendingWampConnection connect(
-        ScheduledExecutorService scheduler,
-        IPendingWampConnectionListener connectListener,
-        IWampConnectionListener connectionListener);
+public interface IWampConnector
+{
+	IPendingWampConnection connect(
+			ScheduledExecutorService scheduler,
+			IPendingWampConnectionListener connectListener,
+			IWampConnectionListener connectionListener );
 }

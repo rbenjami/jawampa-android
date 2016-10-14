@@ -21,29 +21,29 @@ import com.google.gson.JsonObject;
 
 public class PubSubData
 {
-    private final JsonObject details;
-    private final JsonArray  arguments;
-    private final JsonObject keywordArguments;
+	private final JsonObject details;
+	private final JsonArray  arguments;
+	private final JsonObject keywordArguments;
 
-    public PubSubData( JsonObject details, JsonArray arguments, JsonObject keywordArguments )
-    {
-        this.details = details;
-        this.arguments = arguments;
-        this.keywordArguments = keywordArguments;
-    }
+	public PubSubData( JsonObject details, JsonArray arguments, JsonObject keywordArguments )
+	{
+		this.details = details;
+		this.arguments = arguments;
+		this.keywordArguments = keywordArguments;
+	}
 
-    public JsonObject getDetails()
-    {
-        return details;
-    }
+	public JsonObject getDetails()
+	{
+		return details;
+	}
 
-    public JsonArray getArguments()
-    {
-        return arguments;
-    }
+	public JsonArray getArguments()
+	{
+		return arguments;
+	}
 
-    public JsonObject getKeywordArguments()
-    {
-        return keywordArguments;
-    }
+	public JsonObject getKeywordArguments()
+	{
+		return keywordArguments;
+	}
 }

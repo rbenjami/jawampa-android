@@ -32,142 +32,166 @@ import java.util.List;
 /**
  * Stores various configuration data for WAMP clients
  */
-public class ClientConfiguration {
-    private final boolean closeClientOnErrors;
-    
-    private final String authId;
-    private final List<ClientSideAuthentication> authMethods;
-    
-    private final Gson gson;
+public class ClientConfiguration
+{
+	private final boolean closeClientOnErrors;
 
-    private final URI routerUri;
-    private final String realm;
-    private final boolean useStrictUriValidation;
-    
-    private final WampRoles[] clientRoles;
-    
-    private final int totalNrReconnects;
-    private final int reconnectInterval;
-    
-    /** The provider that should be used to obtain a connector */
-    private final IWampConnectorProvider connectorProvider;
-    /** The connector which is used to create new connections to the remote peer */
-    private final IWampConnector connector;
+	private final String                         authId;
+	private final List<ClientSideAuthentication> authMethods;
 
-    private final JsonObject helloDetails;
-    
-    public ClientConfiguration(
-        boolean closeClientOnErrors,
-        String authId,
-        List<ClientSideAuthentication> authMethods,
-        URI routerUri,
-        String realm,
-        boolean useStrictUriValidation,
-        WampRoles[] clientRoles,
-        int totalNrReconnects,
-        int reconnectInterval,
-        IWampConnectorProvider connectorProvider,
-        IWampConnector connector, Gson gson )
-    {
-        this.closeClientOnErrors = closeClientOnErrors;
-        
-        this.authId = authId;
-        this.authMethods = authMethods;
-        
-        this.routerUri = routerUri;
-        this.realm = realm;
-        
-        this.useStrictUriValidation = useStrictUriValidation;
-        
-        this.clientRoles = clientRoles;
-        
-        this.totalNrReconnects = totalNrReconnects;
-        this.reconnectInterval = reconnectInterval;
-        
-        this.connectorProvider = connectorProvider;
-        this.connector = connector;
-        this.gson = gson;
+	private final Gson gson;
 
-        // Put the requested roles in the Hello message
-        helloDetails = new JsonObject();
-        helloDetails.addProperty( "agent", Version.getVersion());
+	private final URI     routerUri;
+	private final String  realm;
+	private final boolean useStrictUriValidation;
 
-        JsonObject rolesNode = new JsonObject();
-        for (WampRoles role : clientRoles) {
-            JsonObject featuresNode = new JsonObject();
-            if (role == WampRoles.Publisher )
-                featuresNode.addProperty("publisher_exclusion", true);
-            else if (role == WampRoles.Subscriber)
-                featuresNode.addProperty("pattern_based_subscription", true);
-            else if (role == WampRoles.Caller)
-                featuresNode.addProperty("caller_identification", true);
-            rolesNode.add( role.toString(), featuresNode );
-        }
-        helloDetails.add( "roles", rolesNode );
+	private final WampRoles[] clientRoles;
 
-        // Insert authentication data
-        if(authId != null) {
-            helloDetails.addProperty("authid", authId);
-        }
-        if (authMethods != null && authMethods.size() != 0) {
-            JsonArray authMethodsNode = new JsonArray();
-            for(ClientSideAuthentication authMethod : authMethods) {
-                authMethodsNode.add(authMethod.getAuthMethod());
-            }
-            helloDetails.add( "authmethods", authMethodsNode );
-        }
-    }
-    
-    public boolean closeClientOnErrors() {
-        return closeClientOnErrors;
-    }
-    
-    public Gson gson() {
-        return gson;
-    }
-    
-    public URI routerUri() {
-        return routerUri;
-    }
-    
-    public String realm() {
-        return realm;
-    }
-    
-    public boolean useStrictUriValidation() {
-        return useStrictUriValidation;
-    }
-    
-    public int totalNrReconnects() {
-        return totalNrReconnects;
-    }
-    
-    public int reconnectInterval() {
-        return reconnectInterval;
-    }
-    
-    /** The connector which is used to create new connections to the remote peer */
-    public IWampConnector connector() {
-        return connector;
-    }
+	private final int totalNrReconnects;
+	private final int reconnectInterval;
 
-    public WampRoles[] clientRoles() {
-        return clientRoles.clone();
-    }
-    
-    public String authId() {
-        return authId;
-    }
-    
-    public List<ClientSideAuthentication> authMethods() {
-        return new ArrayList<ClientSideAuthentication>(authMethods);
-    }
+	/**
+	 * The provider that should be used to obtain a connector
+	 */
+	private final IWampConnectorProvider connectorProvider;
+	/**
+	 * The connector which is used to create new connections to the remote peer
+	 */
+	private final IWampConnector         connector;
 
-    public IWampConnectorProvider connectorProvider() {
-        return connectorProvider;
-    }
+	private final JsonObject helloDetails;
 
-    JsonObject helloDetails(){
-        return helloDetails;
-    }
+	public ClientConfiguration(
+			boolean closeClientOnErrors,
+			String authId,
+			List<ClientSideAuthentication> authMethods,
+			URI routerUri,
+			String realm,
+			boolean useStrictUriValidation,
+			WampRoles[] clientRoles,
+			int totalNrReconnects,
+			int reconnectInterval,
+			IWampConnectorProvider connectorProvider,
+			IWampConnector connector, Gson gson )
+	{
+		this.closeClientOnErrors = closeClientOnErrors;
+
+		this.authId = authId;
+		this.authMethods = authMethods;
+
+		this.routerUri = routerUri;
+		this.realm = realm;
+
+		this.useStrictUriValidation = useStrictUriValidation;
+
+		this.clientRoles = clientRoles;
+
+		this.totalNrReconnects = totalNrReconnects;
+		this.reconnectInterval = reconnectInterval;
+
+		this.connectorProvider = connectorProvider;
+		this.connector = connector;
+		this.gson = gson;
+
+		// Put the requested roles in the Hello message
+		helloDetails = new JsonObject();
+		helloDetails.addProperty( "agent", Version.getVersion() );
+
+		JsonObject rolesNode = new JsonObject();
+		for ( WampRoles role : clientRoles )
+		{
+			JsonObject featuresNode = new JsonObject();
+			if ( role == WampRoles.Publisher )
+				featuresNode.addProperty( "publisher_exclusion", true );
+			else if ( role == WampRoles.Subscriber )
+				featuresNode.addProperty( "pattern_based_subscription", true );
+			else if ( role == WampRoles.Caller )
+				featuresNode.addProperty( "caller_identification", true );
+			rolesNode.add( role.toString(), featuresNode );
+		}
+		helloDetails.add( "roles", rolesNode );
+
+		// Insert authentication data
+		if ( authId != null )
+		{
+			helloDetails.addProperty( "authid", authId );
+		}
+		if ( authMethods != null && authMethods.size() != 0 )
+		{
+			JsonArray authMethodsNode = new JsonArray();
+			for ( ClientSideAuthentication authMethod : authMethods )
+			{
+				authMethodsNode.add( authMethod.getAuthMethod() );
+			}
+			helloDetails.add( "authmethods", authMethodsNode );
+		}
+	}
+
+	public boolean closeClientOnErrors()
+	{
+		return closeClientOnErrors;
+	}
+
+	public Gson gson()
+	{
+		return gson;
+	}
+
+	public URI routerUri()
+	{
+		return routerUri;
+	}
+
+	public String realm()
+	{
+		return realm;
+	}
+
+	public boolean useStrictUriValidation()
+	{
+		return useStrictUriValidation;
+	}
+
+	public int totalNrReconnects()
+	{
+		return totalNrReconnects;
+	}
+
+	public int reconnectInterval()
+	{
+		return reconnectInterval;
+	}
+
+	/**
+	 * The connector which is used to create new connections to the remote peer
+	 */
+	public IWampConnector connector()
+	{
+		return connector;
+	}
+
+	public WampRoles[] clientRoles()
+	{
+		return clientRoles.clone();
+	}
+
+	public String authId()
+	{
+		return authId;
+	}
+
+	public List<ClientSideAuthentication> authMethods()
+	{
+		return new ArrayList<ClientSideAuthentication>( authMethods );
+	}
+
+	public IWampConnectorProvider connectorProvider()
+	{
+		return connectorProvider;
+	}
+
+	JsonObject helloDetails()
+	{
+		return helloDetails;
+	}
 }

@@ -16,13 +16,13 @@
 
 package ws.wamp.jawampa;
 
+import ws.wamp.jawampa.internal.RealmConfig;
+import ws.wamp.jawampa.internal.UriValidator;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import ws.wamp.jawampa.internal.RealmConfig;
-import ws.wamp.jawampa.internal.UriValidator;
 
 /**
  * The {@link WampRouterBuilder} must be used to build {@link WampRouter}
@@ -30,71 +30,80 @@ import ws.wamp.jawampa.internal.UriValidator;
  * It allows to configure the instantiated router in detail before creating
  * it through the {@link #build()} method.
  */
-public class WampRouterBuilder {
-    
-    Map<String, RealmConfig> realms = new HashMap<String, RealmConfig>();
+public class WampRouterBuilder
+{
 
-    public WampRouterBuilder() {
-        
-    }
-    
-    /**
-     * Builds and returns a new WAMP router from the given specification
-     * @return The created WampRouter
-     * @throws ApplicationError if any parameter is not invalid
-     */
-    public WampRouter build() throws ApplicationError {
-        if (realms.size() == 0)
-            throw new ApplicationError(ApplicationError.INVALID_REALM);
-        
-        return new WampRouter(realms);
-    }
-    
-    /**
-     * Adds a realm that is available through the router.<br>
-     * The realm will provide the Broker and Dealer roles and will use
-     * loose Uri validation rules.
-     * @param realmName The name of the realm. Must be a valid WAMP Uri.
-     * @return This WampRouterBuilder object
-     */
-    public WampRouterBuilder addRealm(String realmName) throws ApplicationError {
-        return addRealm(realmName, new WampRoles[] { WampRoles.Broker, WampRoles.Dealer }, false);
-    }
-    
-    /**
-     * Adds a realm that is available through the router
-     * @param realmName The name of the realm. Must be a valid WAMP Uri.
-     * @param roles The roles that are exposed through the router.<br>
-     * Must be Broker, Dealer or Both.
-     * @param useStrictUriValidation True if strict Uri validation rules shall
-     * be used within this realm, false if loose validation rules shall be applied 
-     * @return This WampRouterBuilder object
-     */
-    public WampRouterBuilder addRealm(String realmName, WampRoles[] roles, boolean useStrictUriValidation) throws ApplicationError {
-        if (realmName == null || roles == null)
-            throw new ApplicationError(ApplicationError.INVALID_REALM);
-        
-        // Validate the realm name
-        if (!UriValidator.tryValidate(realmName, useStrictUriValidation) || this.realms.containsKey(realmName))
-            throw new ApplicationError(ApplicationError.INVALID_REALM);
-        
-        // Validate and copy the roles
-        Set<WampRoles> roleSet = new HashSet<WampRoles>();
-        for (WampRoles r : roles) {
-            if (r == null)
-                throw new ApplicationError(ApplicationError.INVALID_REALM);
-            roleSet.add(r);
-        }
-        
-        // Check for at least one role
-        if (roleSet.size() == 0)
-            throw new ApplicationError(ApplicationError.INVALID_REALM);
-        
-        RealmConfig realmConfig = new RealmConfig(roleSet, useStrictUriValidation);
-        
-        // Insert the new realm configuration
-        this.realms.put(realmName, realmConfig);
-        
-        return this;
-    }
+	Map<String, RealmConfig> realms = new HashMap<String, RealmConfig>();
+
+	public WampRouterBuilder()
+	{
+
+	}
+
+	/**
+	 * Builds and returns a new WAMP router from the given specification
+	 *
+	 * @return The created WampRouter
+	 * @throws ApplicationError if any parameter is not invalid
+	 */
+	public WampRouter build() throws ApplicationError
+	{
+		if ( realms.size() == 0 )
+			throw new ApplicationError( ApplicationError.INVALID_REALM );
+
+		return new WampRouter( realms );
+	}
+
+	/**
+	 * Adds a realm that is available through the router.<br>
+	 * The realm will provide the Broker and Dealer roles and will use
+	 * loose Uri validation rules.
+	 *
+	 * @param realmName The name of the realm. Must be a valid WAMP Uri.
+	 * @return This WampRouterBuilder object
+	 */
+	public WampRouterBuilder addRealm( String realmName ) throws ApplicationError
+	{
+		return addRealm( realmName, new WampRoles[]{WampRoles.Broker, WampRoles.Dealer}, false );
+	}
+
+	/**
+	 * Adds a realm that is available through the router
+	 *
+	 * @param realmName              The name of the realm. Must be a valid WAMP Uri.
+	 * @param roles                  The roles that are exposed through the router.<br>
+	 *                               Must be Broker, Dealer or Both.
+	 * @param useStrictUriValidation True if strict Uri validation rules shall
+	 *                               be used within this realm, false if loose validation rules shall be applied
+	 * @return This WampRouterBuilder object
+	 */
+	public WampRouterBuilder addRealm( String realmName, WampRoles[] roles, boolean useStrictUriValidation ) throws ApplicationError
+	{
+		if ( realmName == null || roles == null )
+			throw new ApplicationError( ApplicationError.INVALID_REALM );
+
+		// Validate the realm name
+		if ( !UriValidator.tryValidate( realmName, useStrictUriValidation ) || this.realms.containsKey( realmName ) )
+			throw new ApplicationError( ApplicationError.INVALID_REALM );
+
+		// Validate and copy the roles
+		Set<WampRoles> roleSet = new HashSet<WampRoles>();
+		for ( WampRoles r : roles )
+		{
+			if ( r == null )
+				throw new ApplicationError( ApplicationError.INVALID_REALM );
+			roleSet.add( r );
+		}
+
+		// Check for at least one role
+		if ( roleSet.size() == 0 )
+			throw new ApplicationError( ApplicationError.INVALID_REALM );
+
+		RealmConfig realmConfig = new RealmConfig( roleSet, useStrictUriValidation );
+
+		// Insert the new realm configuration
+		this.realms.put( realmName, realmConfig );
+
+		return this;
+	}
 }

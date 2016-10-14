@@ -16,36 +16,38 @@
 
 package ws.wamp.jawampa.connection;
 
+import ws.wamp.jawampa.WampSerialization;
+
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
-import ws.wamp.jawampa.WampSerialization;
-
 /**
  * Provides connectors that are used by WAMP clients to connect to servers.
  */
-public interface IWampConnectorProvider {
-    
-    /**
-     * Creates and returns a scheduler for the client.<br>
-     * The scheduler is suitable as a scheduler for the client transports which
-     * are created by the factory
-     */
-    ScheduledExecutorService createScheduler();
-    
-    /**
-     * Create a connector that can be used by a client to connect to a server later on.
-     * @param uri The uri to which the client should connect
-     * @param configuration Additional configuration information for the connection.<br>
-     * The type of the configuration depends on the {@link IWampConnectorProvider}.
-     * @param serializations The serializations that the connection should support in
-     * preferred order.<br> 
-     * Must not be null.
-     * @return A connector which can be used by the client to connect to the server.
-     * @throws Exception If no suitable connector can be created with this configuration
-     */
-    IWampConnector createConnector(URI uri,
-                                   IWampClientConnectionConfig configuration,
-                                   List<WampSerialization> serializations) throws Exception;
+public interface IWampConnectorProvider
+{
+
+	/**
+	 * Creates and returns a scheduler for the client.<br>
+	 * The scheduler is suitable as a scheduler for the client transports which
+	 * are created by the factory
+	 */
+	ScheduledExecutorService createScheduler();
+
+	/**
+	 * Create a connector that can be used by a client to connect to a server later on.
+	 *
+	 * @param uri            The uri to which the client should connect
+	 * @param configuration  Additional configuration information for the connection.<br>
+	 *                       The type of the configuration depends on the {@link IWampConnectorProvider}.
+	 * @param serializations The serializations that the connection should support in
+	 *                       preferred order.<br>
+	 *                       Must not be null.
+	 * @return A connector which can be used by the client to connect to the server.
+	 * @throws Exception If no suitable connector can be created with this configuration
+	 */
+	IWampConnector createConnector( URI uri,
+									IWampClientConnectionConfig configuration,
+									List<WampSerialization> serializations ) throws Exception;
 }
