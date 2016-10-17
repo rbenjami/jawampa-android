@@ -3,7 +3,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
 group = 'ws.wamp.jawampa.android'
-version = '1.0.0'
+version = '1.0.1'
 
 android {
 	compileSdkVersion 24
@@ -13,7 +13,7 @@ android {
 		minSdkVersion 15
 		targetSdkVersion 24
 		versionCode 1
-		versionName "1.0"
+		versionName version
 
 		testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
