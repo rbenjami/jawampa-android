@@ -42,7 +42,7 @@ install {
 		pom.project {
 			groupId 'ws.wamp.jawampa.android'
 			artifactId 'jawampa-core'
-			version '1.0.0'
+			version version
 		}
 	}
 }

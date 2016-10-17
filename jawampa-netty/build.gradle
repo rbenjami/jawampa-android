@@ -44,7 +44,7 @@ install {
 		pom.project {
 			groupId 'ws.wamp.jawampa.android'
 			artifactId 'jawampa-netty'
-			version '1.0.0'
+			version version
 		}
 	}
 }
