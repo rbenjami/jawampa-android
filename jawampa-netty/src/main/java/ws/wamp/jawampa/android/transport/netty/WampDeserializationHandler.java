@@ -120,6 +120,7 @@ public class WampDeserializationHandler extends MessageToMessageDecoder<WebSocke
 		// This will lead Netty to closing the connection
 		JsonReader jsonReader = gson.newJsonReader( new InputStreamReader( new ByteBufInputStream( content ) ) );
 		JsonArray arr = gson.fromJson( jsonReader, JsonArray.class );
+		jsonReader.close();
 
 		if ( logger.isDebugEnabled() )
 		{

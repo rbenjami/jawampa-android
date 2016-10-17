@@ -41,7 +41,7 @@ public class WampRouter
 
 	static
 	{
-		SUPPORTED_CLIENT_ROLES = new HashSet<WampRoles>();
+		SUPPORTED_CLIENT_ROLES = new HashSet<>();
 		SUPPORTED_CLIENT_ROLES.add( WampRoles.Caller );
 		SUPPORTED_CLIENT_ROLES.add( WampRoles.Callee );
 		SUPPORTED_CLIENT_ROLES.add( WampRoles.Publisher );
