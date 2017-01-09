@@ -27,7 +27,6 @@ import ws.wamp.jawampa.android.WampSerialization;
 
 public class WampClientWebsocketHandler extends ChannelInboundHandlerAdapter
 {
-
 	final WebSocketClientHandshaker handshaker;
 
 	WampSerialization serialization;
@@ -60,8 +59,7 @@ public class WampClientWebsocketHandler extends ChannelInboundHandlerAdapter
 		if ( msg instanceof CloseWebSocketFrame )
 		{
 			//readState = ReadState.Closed;
-			handshaker.close( ctx.channel(), (CloseWebSocketFrame) msg )
-					  .addListener( ChannelFutureListener.CLOSE );
+			handshaker.close( ctx.channel(), (CloseWebSocketFrame) msg ).addListener( ChannelFutureListener.CLOSE );
 		}
 		else
 		{
@@ -83,16 +81,11 @@ public class WampClientWebsocketHandler extends ChannelInboundHandlerAdapter
 			}
 
 			// Install the serializer and deserializer
-			ctx.pipeline()
-			   .addAfter( ctx.name(), "wamp-deserializer",
-					   new WampDeserializationHandler( serialization ) );
-			ctx.pipeline()
-			   .addAfter( ctx.name(), "wamp-serializer",
-					   new WampSerializationHandler( serialization ) );
+			ctx.pipeline().addAfter( ctx.name(), "wamp-deserializer", new WampDeserializationHandler( serialization ) );
+			ctx.pipeline().addAfter( ctx.name(), "wamp-serializer", new WampSerializationHandler( serialization ) );
 
 			// Fire the connection established event
 			ctx.fireUserEventTriggered( new ConnectionEstablishedEvent( serialization ) );
-
 		}
 		else
 		{

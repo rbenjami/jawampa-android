@@ -5,13 +5,12 @@ import ws.wamp.jawampa.android.connection.IWampClientConnectionConfig;
 
 public class NettyWampConnectionConfig implements IWampClientConnectionConfig
 {
+	public static final int DEFAULT_MAX_FRAME_PAYLOAD_LENGTH = 65535;
 
-	static final int DEFAULT_MAX_FRAME_PAYLOAD_LENGTH = 65535;
+	private SslContext sslContext;
+	private int        maxFramePayloadLength;
 
-	SslContext sslContext;
-	int        maxFramePayloadLength;
-
-	NettyWampConnectionConfig( SslContext sslContext, int maxFramePayloadLength )
+	public NettyWampConnectionConfig( SslContext sslContext, int maxFramePayloadLength )
 	{
 		this.sslContext = sslContext;
 		this.maxFramePayloadLength = maxFramePayloadLength;

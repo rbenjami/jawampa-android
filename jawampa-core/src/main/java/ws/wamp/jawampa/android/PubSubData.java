@@ -21,15 +21,22 @@ import com.google.gson.JsonObject;
 
 public class PubSubData
 {
+	private final String topic;
 	private final JsonObject details;
 	private final JsonArray  arguments;
 	private final JsonObject keywordArguments;
 
-	public PubSubData( JsonObject details, JsonArray arguments, JsonObject keywordArguments )
+	public PubSubData( String topic, JsonObject details, JsonArray arguments, JsonObject keywordArguments )
 	{
+		this.topic = topic;
 		this.details = details;
 		this.arguments = arguments;
 		this.keywordArguments = keywordArguments;
+	}
+
+	public String getTopic()
+	{
+		return topic;
 	}
 
 	public JsonObject getDetails()

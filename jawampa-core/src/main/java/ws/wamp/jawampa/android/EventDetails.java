@@ -2,8 +2,6 @@ package ws.wamp.jawampa.android;
 
 public class EventDetails<T>
 {
-
-
 	final T      message;
 	final String topic;
 
@@ -22,6 +20,4 @@ public class EventDetails<T>
 	{
 		return topic;
 	}
-
-
 }

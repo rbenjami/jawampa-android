@@ -38,7 +38,6 @@ import java.util.Map.Entry;
  */
 public class SessionEstablishedState implements ClientState
 {
-
 	enum PubSubState
 	{
 		Subscribing,
@@ -72,12 +71,14 @@ public class SessionEstablishedState implements ClientState
 		public       PubSubState       state;
 		public final SubscriptionFlags flags;
 		public long subscriptionId = 0;
+		public String topic;
 
 		public final List<Subscriber<? super PubSubData>> subscribers
 				= new ArrayList<Subscriber<? super PubSubData>>();
 
-		public SubscriptionMapEntry( SubscriptionFlags flags, PubSubState state )
+		public SubscriptionMapEntry( String topic, SubscriptionFlags flags, PubSubState state )
 		{
+			this.topic = topic;
 			this.flags = flags;
 			this.state = state;
 		}
@@ -104,20 +105,13 @@ public class SessionEstablishedState implements ClientState
 	/**
 	 * The currently active connection
 	 */
-	IConnectionController connectionController;
+	private IConnectionController connectionController;
 
-	HashMap<Long, RequestMapEntry> requestMap =
-			new HashMap<Long, RequestMapEntry>();
-
-	EnumMap<SubscriptionFlags, HashMap<String, SubscriptionMapEntry>> subscriptionsByFlags          =
-			new EnumMap<SubscriptionFlags, HashMap<String, SubscriptionMapEntry>>( SubscriptionFlags.class );
-	HashMap<Long, SubscriptionMapEntry>                               subscriptionsBySubscriptionId =
-			new HashMap<Long, SubscriptionMapEntry>();
-
-	public HashMap<String, RegisteredProceduresMapEntry> registeredProceduresByUri =
-			new HashMap<String, RegisteredProceduresMapEntry>();
-	HashMap<Long, RegisteredProceduresMapEntry> registeredProceduresById =
-			new HashMap<Long, RegisteredProceduresMapEntry>();
+	private HashMap<Long, RequestMapEntry>                                    requestMap                    = new HashMap<>();
+	private EnumMap<SubscriptionFlags, HashMap<String, SubscriptionMapEntry>> subscriptionsByFlags          = new EnumMap<>( SubscriptionFlags.class );
+	private HashMap<Long, SubscriptionMapEntry>                               subscriptionsBySubscriptionId = new HashMap<>();
+	private HashMap<String, RegisteredProceduresMapEntry>                     registeredProceduresByUri     = new HashMap<>();
+	private HashMap<Long, RegisteredProceduresMapEntry>                       registeredProceduresById      = new HashMap<>();
 
 	long lastRequestId = IdValidator.MIN_VALID_ID;
 
@@ -361,7 +355,7 @@ public class SessionEstablishedState implements ClientState
 			EventMessage ev = (EventMessage) msg;
 			SubscriptionMapEntry entry = subscriptionsBySubscriptionId.get( ev.subscriptionId );
 			if ( entry == null || entry.state != PubSubState.Subscribed ) return; // Ignore the result
-			PubSubData evResult = new PubSubData( ev.details, ev.arguments, ev.argumentsKw );
+			PubSubData evResult = new PubSubData( entry.topic, ev.details, ev.arguments, ev.argumentsKw );
 			// publish the event
 			for ( Subscriber<? super PubSubData> s : entry.subscribers )
 			{
@@ -506,8 +500,7 @@ public class SessionEstablishedState implements ClientState
 		final RegisteredProceduresMapEntry entry = registeredProceduresByUri.get( topic );
 		if ( entry != null )
 		{
-			subscriber.onError(
-					new ApplicationError( ApplicationError.PROCEDURE_ALREADY_EXISTS ) );
+			subscriber.onError( new ApplicationError( ApplicationError.PROCEDURE_ALREADY_EXISTS ) );
 			return;
 		}
 
@@ -652,7 +645,7 @@ public class SessionEstablishedState implements ClientState
 		else
 		{ // need to subscribe
 			// Insert a new entry in the subscription map
-			final SubscriptionMapEntry newEntry = new SubscriptionMapEntry( flags, PubSubState.Subscribing );
+			final SubscriptionMapEntry newEntry = new SubscriptionMapEntry( topic, flags, PubSubState.Subscribing );
 			newEntry.subscribers.add( subscriber );
 			subscriptionsByFlags.get( flags ).put( topic, newEntry );
 

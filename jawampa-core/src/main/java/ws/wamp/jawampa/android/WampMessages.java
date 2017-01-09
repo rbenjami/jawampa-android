@@ -16,35 +16,28 @@
 
 package ws.wamp.jawampa.android;
 
+import android.util.SparseArray;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 public class WampMessages
 {
-
 	/**
 	 * Base class for all messages
 	 */
 	public static abstract class WampMessage
 	{
+		public abstract JsonArray toObjectArray() throws WampError;
 
-		public abstract JsonArray toObjectArray()
-				throws WampError;
-
-		public static WampMessage fromObjectArray( JsonArray messageNode )
-				throws WampError
+		public static WampMessage fromObjectArray( JsonArray messageNode ) throws WampError
 		{
-			if ( messageNode == null || messageNode.size() < 1//!messageNode.get(0).canConvertToInt())
+			if ( messageNode == null || messageNode.size() < 1
 					|| !( messageNode.get( 0 ).isJsonPrimitive() && ( (JsonPrimitive) messageNode.get( 0 ) ).isNumber() ) )
 				throw new WampError( ApplicationError.INVALID_MESSAGE );
 
 			int messageType = messageNode.get( 0 ).getAsInt();
-			WampMessageFactory factory = messageFactories.get( messageType );
+			WampMessageFactory factory = MESSAGE_FACTORIES.get( messageType );
 			if ( factory == null )
 				return null; // We can't find the message type, so we skip it
 
@@ -57,46 +50,44 @@ public class WampMessages
 		 * A map which associates all message types which factories which can
 		 * recreate them from received data.
 		 */
-		final static Map<Integer, WampMessageFactory> messageFactories;
+		final static SparseArray<WampMessageFactory> MESSAGE_FACTORIES = new SparseArray<>();
 
 		static
 		{
-			HashMap<Integer, WampMessageFactory> map = new HashMap<>();
-			map.put( HelloMessage.ID, new HelloMessage.Factory() );
-			map.put( WelcomeMessage.ID, new WelcomeMessage.Factory() );
-			map.put( AbortMessage.ID, new AbortMessage.Factory() );
-			map.put( ChallengeMessage.ID, new ChallengeMessage.Factory() );
-			map.put( AuthenticateMessage.ID, new AuthenticateMessage.Factory() );
-			map.put( GoodbyeMessage.ID, new GoodbyeMessage.Factory() );
-			// map.put(MessageType.ID, new HeartbeatMessage.Factory());
-			map.put( ErrorMessage.ID, new ErrorMessage.Factory() );
-			map.put( PublishMessage.ID, new PublishMessage.Factory() );
-			map.put( PublishedMessage.ID, new PublishedMessage.Factory() );
-			map.put( SubscribeMessage.ID, new SubscribeMessage.Factory() );
-			map.put( SubscribedMessage.ID, new SubscribedMessage.Factory() );
-			map.put( UnsubscribeMessage.ID, new UnsubscribeMessage.Factory() );
-			map.put( UnsubscribedMessage.ID, new UnsubscribedMessage.Factory() );
-			map.put( EventMessage.ID, new EventMessage.Factory() );
-			map.put( CallMessage.ID, new CallMessage.Factory() );
-			// map.put(CancelMessage.ID, new CancelMessage.Factory());
-			map.put( ResultMessage.ID, new ResultMessage.Factory() );
-			map.put( RegisterMessage.ID, new RegisterMessage.Factory() );
-			map.put( RegisteredMessage.ID, new RegisteredMessage.Factory() );
-			map.put( UnregisterMessage.ID, new UnregisterMessage.Factory() );
-			map.put( UnregisteredMessage.ID, new UnregisteredMessage.Factory() );
-			map.put( InvocationMessage.ID, new InvocationMessage.Factory() );
-			// map.put(InterruptMessage.ID, new InterruptMessage.Factory());
-			map.put( YieldMessage.ID, new YieldMessage.Factory() );
-			messageFactories = Collections.unmodifiableMap( map );
+			MESSAGE_FACTORIES.put( HelloMessage.ID, new HelloMessage.Factory() );
+			MESSAGE_FACTORIES.put( WelcomeMessage.ID, new WelcomeMessage.Factory() );
+			MESSAGE_FACTORIES.put( AbortMessage.ID, new AbortMessage.Factory() );
+			MESSAGE_FACTORIES.put( ChallengeMessage.ID, new ChallengeMessage.Factory() );
+			MESSAGE_FACTORIES.put( AuthenticateMessage.ID, new AuthenticateMessage.Factory() );
+			MESSAGE_FACTORIES.put( GoodbyeMessage.ID, new GoodbyeMessage.Factory() );
+			// MESSAGE_FACTORIES.put(MessageType.ID, new HeartbeatMessage.Factory());
+			MESSAGE_FACTORIES.put( ErrorMessage.ID, new ErrorMessage.Factory() );
+			MESSAGE_FACTORIES.put( PublishMessage.ID, new PublishMessage.Factory() );
+			MESSAGE_FACTORIES.put( PublishedMessage.ID, new PublishedMessage.Factory() );
+			MESSAGE_FACTORIES.put( SubscribeMessage.ID, new SubscribeMessage.Factory() );
+			MESSAGE_FACTORIES.put( SubscribedMessage.ID, new SubscribedMessage.Factory() );
+			MESSAGE_FACTORIES.put( UnsubscribeMessage.ID, new UnsubscribeMessage.Factory() );
+			MESSAGE_FACTORIES.put( UnsubscribedMessage.ID, new UnsubscribedMessage.Factory() );
+			MESSAGE_FACTORIES.put( EventMessage.ID, new EventMessage.Factory() );
+			MESSAGE_FACTORIES.put( CallMessage.ID, new CallMessage.Factory() );
+			// MESSAGE_FACTORIES.put(CancelMessage.ID, new CancelMessage.Factory());
+			MESSAGE_FACTORIES.put( ResultMessage.ID, new ResultMessage.Factory() );
+			MESSAGE_FACTORIES.put( RegisterMessage.ID, new RegisterMessage.Factory() );
+			MESSAGE_FACTORIES.put( RegisteredMessage.ID, new RegisteredMessage.Factory() );
+			MESSAGE_FACTORIES.put( UnregisterMessage.ID, new UnregisterMessage.Factory() );
+			MESSAGE_FACTORIES.put( UnregisteredMessage.ID, new UnregisteredMessage.Factory() );
+			MESSAGE_FACTORIES.put( InvocationMessage.ID, new InvocationMessage.Factory() );
+			// MESSAGE_FACTORIES.put(InterruptMessage.ID, new InterruptMessage.Factory());
+			MESSAGE_FACTORIES.put( YieldMessage.ID, new YieldMessage.Factory() );
 		}
 	}
 
 	interface WampMessageFactory
 	{
-		public WampMessage fromObjectArray( JsonArray messageNode ) throws WampError;
+		WampMessage fromObjectArray( JsonArray messageNode ) throws WampError;
 	}
 
-	/**
+	/**topic_name
 	 * Sent by a Client to initiate opening of a WAMP session to a Router
 	 * attaching to a Realm. Format: [HELLO, Realm|uri, Details|dict]
 	 */
@@ -324,7 +315,8 @@ public class WampMessages
 
 	/**
 	 * Sent by a Peer to close a previously opened WAMP session. Must be echo'ed
-	 * by the receiving Peer. Format: [GOODBYE, Details|dict, Reason|uri]
+	 * by the receiving Peer.
+	 * Format: [GOODBYE, Details|dict, Reason|uri]
 	 */
 	public static class GoodbyeMessage extends WampMessage
 	{
@@ -370,11 +362,10 @@ public class WampMessages
 
 	/**
 	 * Error reply sent by a Peer as an error response to different kinds of
-	 * requests. Possible formats: [ERROR, REQUEST.Type|int, REQUEST.Request|id,
-	 * Details|dict, Error|uri] [ERROR, REQUEST.Type|int, REQUEST.Request|id,
-	 * Details|dict, Error|uri, Arguments|list] [ERROR, REQUEST.Type|int,
-	 * REQUEST.Request|id, Details|dict, Error|uri, Arguments|list,
-	 * ArgumentsKw|dict]
+	 * requests. Possible formats:
+	 * [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict, Error|uri]
+	 * [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict, Error|uri, Arguments|list]
+	 * [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict, Error|uri, Arguments|list, ArgumentsKw|dict]
 	 */
 	public static class ErrorMessage extends WampMessage
 	{
@@ -427,7 +418,7 @@ public class WampMessages
 						|| !( messageNode.get( 1 ).isJsonPrimitive() && ( (JsonPrimitive) messageNode.get( 1 ) ).isNumber() )
 						|| !( messageNode.get( 2 ).isJsonPrimitive() && ( (JsonPrimitive) messageNode.get( 2 ) ).isNumber() )
 						|| !messageNode.get( 3 ).isJsonObject()
-						|| !( messageNode.get( 4 ).isJsonPrimitive() && ( (JsonPrimitive) messageNode.get( 2 ) ).isString() ) )
+						|| !( messageNode.get( 4 ).isJsonPrimitive() && ( (JsonPrimitive) messageNode.get( 4 ) ).isString() ) )
 					throw new WampError( ApplicationError.INVALID_MESSAGE );
 
 				int requestType = messageNode.get( 1 ).getAsInt();
@@ -458,9 +449,9 @@ public class WampMessages
 
 	/**
 	 * Sent by a Publisher to a Broker to publish an event. Possible formats:
-	 * [PUBLISH, Request|id, Options|dict, Topic|uri] [PUBLISH, Request|id,
-	 * Options|dict, Topic|uri, Arguments|list] [PUBLISH, Request|id,
-	 * Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
+	 * [PUBLISH, Request|id, Options|dict, Topic|uri]
+	 * [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list]
+	 * [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list, ArgumentsKw|dict]
 	 */
 	public static class PublishMessage extends WampMessage
 	{
@@ -756,11 +747,10 @@ public class WampMessages
 
 	/**
 	 * Event dispatched by Broker to Subscribers for subscription the event was
-	 * matching. [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
-	 * Details|dict] [EVENT, SUBSCRIBED.Subscription|id,
-	 * PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list] [EVENT,
-	 * SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict,
-	 * PUBLISH.Arguments|list, PUBLISH.ArgumentsKw|dict]
+	 * matching.
+	 * [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict]
+	 * [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list]
+	 * [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentsKw|dict]
 	 */
 	public static class EventMessage extends WampMessage
 	{
@@ -771,8 +761,7 @@ public class WampMessages
 		public JsonArray  arguments;
 		public JsonObject argumentsKw;
 
-		public EventMessage( long subscriptionId, long publicationId,
-							 JsonObject details, JsonArray arguments, JsonObject argumentsKw )
+		public EventMessage( long subscriptionId, long publicationId, JsonObject details, JsonArray arguments, JsonObject argumentsKw )
 		{
 			this.subscriptionId = subscriptionId;
 			this.publicationId = publicationId;
@@ -837,10 +826,10 @@ public class WampMessages
 	}
 
 	/**
-	 * Call as originally issued by the Caller to the Dealer. [CALL, Request|id,
-	 * Options|dict, Procedure|uri] [CALL, Request|id, Options|dict,
-	 * Procedure|uri, Arguments|list] [CALL, Request|id, Options|dict,
-	 * Procedure|uri, Arguments|list, ArgumentsKw|dict]
+	 * Call as originally issued by the Caller to the Dealer.
+	 * [CALL, Request|id, Options|dict, Procedure|uri]
+	 * [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list]
+	 * [CALL, Request|id, Options|dict, Procedure|uri, Arguments|list, ArgumentsKw|dict]
 	 */
 	public static class CallMessage extends WampMessage
 	{
@@ -851,8 +840,7 @@ public class WampMessages
 		public JsonArray  arguments;
 		public JsonObject argumentsKw;
 
-		public CallMessage( long requestId, JsonObject options, String procedure,
-							JsonArray arguments, JsonObject argumentsKw )
+		public CallMessage( long requestId, JsonObject options, String procedure, JsonArray arguments, JsonObject argumentsKw )
 		{
 			this.requestId = requestId;
 			this.options = options;
@@ -917,10 +905,10 @@ public class WampMessages
 	}
 
 	/**
-	 * Result of a call as returned by Dealer to Caller. [RESULT,
-	 * CALL.Request|id, Details|dict] [RESULT, CALL.Request|id, Details|dict,
-	 * YIELD.Arguments|list] [RESULT, CALL.Request|id, Details|dict,
-	 * YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
+	 * Result of a call as returned by Dealer to Caller.
+	 * [RESULT, CALL.Request|id, Details|dict]
+	 * [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list]
+	 * [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
 	 */
 	public static class ResultMessage extends WampMessage
 	{
@@ -992,8 +980,8 @@ public class WampMessages
 	}
 
 	/**
-	 * A Callees request to register an endpoint at a Dealer. [REGISTER,
-	 * Request|id, Options|dict, Procedure|uri]
+	 * A Callees request to register an endpoint at a Dealer.
+	 * [REGISTER, Request|id, Options|dict, Procedure|uri]
 	 */
 	public static class RegisterMessage extends WampMessage
 	{
@@ -1168,11 +1156,10 @@ public class WampMessages
 	}
 
 	/**
-	 * Actual invocation of an endpoint sent by Dealer to a Callee. [INVOCATION,
-	 * Request|id, REGISTERED.Registration|id, Details|dict] [INVOCATION,
-	 * Request|id, REGISTERED.Registration|id, Details|dict,
-	 * CALL.Arguments|list] [INVOCATION, Request|id, REGISTERED.Registration|id,
-	 * Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
+	 * Actual invocation of an endpoint sent by Dealer to a Callee.
+	 * [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict]
+	 * [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list]
+	 * [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 	 */
 	public static class InvocationMessage extends WampMessage
 	{
@@ -1183,8 +1170,7 @@ public class WampMessages
 		public JsonArray  arguments;
 		public JsonObject argumentsKw;
 
-		public InvocationMessage( long requestId, long registrationId,
-								  JsonObject details, JsonArray arguments, JsonObject argumentsKw )
+		public InvocationMessage( long requestId, long registrationId, JsonObject details, JsonArray arguments, JsonObject argumentsKw )
 		{
 			this.requestId = requestId;
 			this.registrationId = registrationId;
@@ -1242,17 +1228,16 @@ public class WampMessages
 					}
 				}
 
-				return new InvocationMessage( requestId, registrationId,
-						details, arguments, argumentsKw );
+				return new InvocationMessage( requestId, registrationId, details, arguments, argumentsKw );
 			}
 		}
 	}
 
 	/**
-	 * Actual yield from an endpoint send by a Callee to Dealer. [YIELD,
-	 * INVOCATION.Request|id, Options|dict] [YIELD, INVOCATION.Request|id,
-	 * Options|dict, Arguments|list] [YIELD, INVOCATION.Request|id,
-	 * Options|dict, Arguments|list, ArgumentsKw|dict]
+	 * Actual yield from an endpoint send by a Callee to Dealer.
+	 * [YIELD, INVOCATION.Request|id, Options|dict]
+	 * [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list]
+	 * [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
 	 */
 	public static class YieldMessage extends WampMessage
 	{
@@ -1317,8 +1302,7 @@ public class WampMessages
 					}
 				}
 
-				return new YieldMessage( requestId, options, arguments,
-						argumentsKw );
+				return new YieldMessage( requestId, options, arguments, argumentsKw );
 			}
 		}
 	}

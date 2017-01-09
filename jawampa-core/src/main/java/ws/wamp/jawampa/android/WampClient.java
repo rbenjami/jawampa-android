@@ -549,7 +549,8 @@ public class WampClient
 					throw OnErrorThrowable.from( new ApplicationError( ApplicationError.MISSING_VALUE ) );
 
 				JsonElement eventNode = ev.getArguments().get( 0 );
-				if ( eventNode.isJsonNull() ) return null;
+				if ( eventNode.isJsonNull() )
+					return null;
 
 				T eventValue;
 				try

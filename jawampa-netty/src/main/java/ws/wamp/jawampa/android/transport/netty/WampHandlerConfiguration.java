@@ -22,5 +22,5 @@ public class WampHandlerConfiguration
 	/**
 	 * The maximum allowed websocket frame size for WAMP messages
 	 */
-	final static int MAX_WEBSOCKET_FRAME_SIZE = 16 * 1024 * 1024; // 16MB
+	public final static int MAX_WEBSOCKET_FRAME_SIZE = 16 * 1024 * 1024; // 16MB
 }

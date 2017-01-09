@@ -81,8 +81,7 @@ public class WampDeserializationHandler extends MessageToMessageDecoder<WebSocke
 	}
 
 	@Override
-	protected void decode( ChannelHandlerContext ctx, WebSocketFrame frame, List<Object> out )
-			throws Exception
+	protected void decode( ChannelHandlerContext ctx, WebSocketFrame frame, List<Object> out ) throws Exception
 	{
 		if ( readState != ReadState.Reading ) return;
 
@@ -127,8 +126,8 @@ public class WampDeserializationHandler extends MessageToMessageDecoder<WebSocke
 			logger.debug( "Deserialized Wamp Message: {}", arr.toString() );
 		}
 
-		WampMessage recvdMessage = WampMessage.fromObjectArray( arr );
-		out.add( recvdMessage );
+		WampMessage receivedMessage = WampMessage.fromObjectArray( arr );
+		out.add( receivedMessage );
 	}
 
 	@Override
@@ -137,7 +136,6 @@ public class WampDeserializationHandler extends MessageToMessageDecoder<WebSocke
 		// We caught an exception.
 		// Most probably because we received an invalid message
 		readState = ReadState.Error;
-		ctx.writeAndFlush( Unpooled.EMPTY_BUFFER )
-		   .addListener( ChannelFutureListener.CLOSE );
+		ctx.writeAndFlush( Unpooled.EMPTY_BUFFER ).addListener( ChannelFutureListener.CLOSE );
 	}
 }
